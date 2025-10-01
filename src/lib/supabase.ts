@@ -35,7 +35,7 @@ export async function getCurrentUser() {
       )
     `)
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
   return {
     user,
