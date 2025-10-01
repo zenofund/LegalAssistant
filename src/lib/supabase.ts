@@ -22,8 +22,11 @@ export async function getCurrentUser() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
   if (authError || !user) {
+    console.log('No authenticated user found:', authError);
     return { user: null, profile: null, error: authError };
   }
+
+  console.log('Authenticated user ID:', user.id);
 
   const { data: profile, error: profileError } = await supabase
     .from('users')
@@ -36,6 +39,8 @@ export async function getCurrentUser() {
     `)
     .eq('id', user.id)
     .maybeSingle();
+
+  console.log('Profile query result:', { profile, profileError });
 
   return {
     user,
