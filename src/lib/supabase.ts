@@ -4,7 +4,16 @@ import type { Database } from '../types/database';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+console.log('🔧 Supabase Client Initialization:');
+console.log('📍 VITE_SUPABASE_URL:', supabaseUrl);
+console.log('🔑 VITE_SUPABASE_ANON_KEY:', supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'undefined');
+console.log('🌍 Environment mode:', import.meta.env.MODE);
+console.log('📦 All env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+
 if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase environment variables!');
+  console.error('Missing URL:', !supabaseUrl);
+  console.error('Missing Key:', !supabaseKey);
   throw new Error('Missing Supabase environment variables');
 }
 
@@ -17,9 +26,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   }
 });
 
+console.log('✅ Supabase client created successfully');
+console.log('🔗 Client URL:', supabase.supabaseUrl);
+console.log('🔑 Client Key (first 20 chars):', supabase.supabaseKey.substring(0, 20) + '...');
+
 // Helper function to get current user with profile
 export async function getCurrentUser() {
   console.log('🔍 getCurrentUser: Starting user fetch...');
+  console.log('🔗 Using Supabase URL:', supabase.supabaseUrl);
   
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
