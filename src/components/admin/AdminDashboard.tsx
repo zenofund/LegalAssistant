@@ -8,6 +8,7 @@ import { Input } from '../ui/Input';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Modal } from '../ui/Modal';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { SubscriptionDetailsModal } from './SubscriptionDetailsModal';
 
 interface AdminStats {
   totalUsers: number;
@@ -625,6 +626,8 @@ function DocumentsTab() {
 function SubscriptionsTab() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSubscriptionDetailsModal, setShowSubscriptionDetailsModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
 
   useEffect(() => {
     loadSubscriptions();
@@ -648,6 +651,17 @@ function SubscriptionsTab() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewSubscription = (subscription: any) => {
+    setSelectedSubscription(subscription);
+    setShowSubscriptionDetailsModal(true);
+  };
+
+  const handleUpdateSuccess = () => {
+    loadSubscriptions();
+    setShowSubscriptionDetailsModal(false);
+    setSelectedSubscription(null);
   };
 
   return (
@@ -744,7 +758,11 @@ function SubscriptionsTab() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewSubscription(sub)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm">
@@ -760,6 +778,17 @@ function SubscriptionsTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Subscription Details Modal */}
+      <SubscriptionDetailsModal
+        isOpen={showSubscriptionDetailsModal}
+        onClose={() => {
+          setShowSubscriptionDetailsModal(false);
+          setSelectedSubscription(null);
+        }}
+        subscription={selectedSubscription}
+        onUpdateSuccess={handleUpdateSuccess}
+      />
     </div>
   );
 }
