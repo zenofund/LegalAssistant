@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
+import { supabase, trackUsage } from '../lib/supabase';
 import type { ChatMessage } from '../types/database';
-import type { UserProfile } from '../types/database';
 
 interface ChatStore {
   currentSession: string | null;
@@ -186,8 +185,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         isLoading: false
       }));
 
-      // Track usage for the message exchange
+      // Track usage and update session
       await trackUsage('chat_message');
+      
+      // Update chat session with new message count and timestamp
+      await supabase
+        .from('chat_sessions')
+        .update({
+          message_count: state.messages.length + 2, // +2 for user and AI messages
+          last_message_at: new Date().toISOString(),
+          title: state.messages.length === 0 ? content.slice(0, 50) + '...' : undefined
+        })
+        .eq('id', sessionId);
 
     } catch (error) {
       set({

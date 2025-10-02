@@ -49,53 +49,13 @@ export function EnhancedSidebar({
   const [chatSessions, setChatSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [loadingChatUsage, setLoadingChatUsage] = useState(true);
-  const [currentDailyChatCount, setCurrentDailyChatCount] = useState(0);
   const [maxDailyChatLimit, setMaxDailyChatLimit] = useState(50);
 
   useEffect(() => {
     if (profile) {
-      loadChatSessions();
       loadChatUsage();
     }
   }, [profile]);
-
-  const loadChatUsage = async () => {
-    if (!profile) return;
-
-    setLoadingChatUsage(true);
-    try {
-      // Get current date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Get current chat count for today
-      const { data: usageData, error: usageError } = await supabase
-        .from('usage_tracking')
-        .select('count')
-        .eq('user_id', profile.id)
-        .eq('feature', 'chat_message')
-        .eq('date', today)
-        .single();
-
-      if (usageError && usageError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        console.error('Error loading chat usage data:', usageError);
-      }
-
-      const currentCount = usageData?.count || 0;
-      setCurrentDailyChatCount(currentCount);
-
-      // Get max chat limit from current plan
-      const currentPlan = profile.subscription?.plan;
-      const maxLimit = currentPlan?.max_chats_per_day || 50;
-      setMaxDailyChatLimit(maxLimit);
-
-    } catch (error) {
-      console.error('Error loading chat usage:', error);
-    } finally {
-      setLoadingChatUsage(false);
-    }
-  };
   const loadChatSessions = async () => {
     if (!profile) return;
 
@@ -268,17 +228,6 @@ export function EnhancedSidebar({
           )}
         </div>
       </div>
-
-      {/* --- MOVED LOGIC HERE --- */}
-      {/* This section now correctly sits outside the map loop */}
-      {!loadingChatUsage && (
-        <div className="px-4 py-2 text-center text-xs text-gray-500 border-t border-gray-200">
-          {maxDailyChatLimit === -1 
-            ? 'Unlimited messages' 
-            : `Daily usage: ${currentDailyChatCount}/${maxDailyChatLimit} messages`
-          }
-        </div>
-      )}
 
       {/* Quick Actions */}
       <div className="border-t border-gray-200 p-4">

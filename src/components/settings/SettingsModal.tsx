@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { formatCurrency } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -124,6 +125,66 @@ function ProfileSettings({ profile, updateProfile }: any) {
 }
 
 function SubscriptionSettings({ profile }: any) {
+  const [loadingUsage, setLoadingUsage] = useState(true);
+  const [currentChatCount, setCurrentChatCount] = useState(0);
+  const [maxChatLimit, setMaxChatLimit] = useState(50);
+  const [currentDocumentCount, setCurrentDocumentCount] = useState(0);
+  const [maxDocumentLimit, setMaxDocumentLimit] = useState(10);
+
+  useEffect(() => {
+    if (profile) {
+      loadUsageData();
+    }
+  }, [profile]);
+
+  const loadUsageData = async () => {
+    if (!profile) return;
+
+    setLoadingUsage(true);
+    try {
+      // Get current date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get current chat count for today
+      const { data: usageData, error: usageError } = await supabase
+        .from('usage_tracking')
+        .select('count')
+        .eq('user_id', profile.id)
+        .eq('feature', 'chat_message')
+        .eq('date', today)
+        .single();
+
+      if (usageError && usageError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error loading usage data:', usageError);
+      }
+
+      const currentChatUsage = usageData?.count || 0;
+      setCurrentChatCount(currentChatUsage);
+
+      // Get document count
+      const { count: docCount, error: docError } = await supabase
+        .from('documents')
+        .select('id', { count: 'exact' })
+        .eq('uploaded_by', profile.id);
+
+      if (docError) {
+        console.error('Error loading document count:', docError);
+      } else {
+        setCurrentDocumentCount(docCount || 0);
+      }
+
+      // Get limits from current plan
+      const currentPlan = profile.subscription?.plan;
+      setMaxChatLimit(currentPlan?.max_chats_per_day || 50);
+      setMaxDocumentLimit(currentPlan?.max_documents || 10);
+
+    } catch (error) {
+      console.error('Error loading usage data:', error);
+    } finally {
+      setLoadingUsage(false);
+    }
+  };
+
   const subscription = profile.subscription;
   const plan = subscription?.plan;
 
@@ -153,20 +214,34 @@ function SubscriptionSettings({ profile }: any) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Documents uploaded:</span>
-                <span className="font-medium">{plan?.max_documents === -1 ? 'Unlimited' : `0 / ${plan?.max_documents || 10}`}</span>
+            {loadingUsage ? (
+              <div className="space-y-3">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Daily chat limit:</span>
-                <span className="font-medium">{plan?.max_chats_per_day === -1 ? 'Unlimited' : `0 / ${plan?.max_chats_per_day || 50}`}</span>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Documents uploaded:</span>
+                  <span className="font-medium">
+                    {maxDocumentLimit === -1 ? 'Unlimited' : `${currentDocumentCount} / ${maxDocumentLimit}`}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Daily chat messages:</span>
+                  <span className="font-medium">
+                    {maxChatLimit === -1 ? 'Unlimited' : `${currentChatCount} / ${maxChatLimit}`}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Internet search:</span>
+                  <span className="font-medium">{plan?.internet_search ? 'Enabled' : 'Not available'}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Internet search:</span>
-                <span className="font-medium">{plan?.internet_search ? 'Enabled' : 'Not available'}</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
