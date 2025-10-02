@@ -95,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
       if (profileError) {
+        console.error('Profile creation error:', profileError);
         return { error: profileError };
       }
     }
