@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
+import { supabase, trackUsage } from '../../lib/supabase';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -21,7 +21,42 @@ interface FileUpload {
 export function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentDocumentCount, setCurrentDocumentCount] = useState(0);
+  const [maxDocumentLimit, setMaxDocumentLimit] = useState(10);
+  const [loadingUsage, setLoadingUsage] = useState(false);
   const { profile } = useAuth();
+
+  useEffect(() => {
+    if (isOpen && profile) {
+      loadCurrentUsage();
+    }
+  }, [isOpen, profile]);
+
+  const loadCurrentUsage = async () => {
+    if (!profile) return;
+
+    setLoadingUsage(true);
+    try {
+      // Get current document count
+      const { count, error } = await supabase
+        .from('documents')
+        .select('id', { count: 'exact' })
+        .eq('uploaded_by', profile.id);
+
+      if (error) throw error;
+
+      setCurrentDocumentCount(count || 0);
+
+      // Get max document limit from current plan
+      const currentPlan = profile.subscription?.plan;
+      setMaxDocumentLimit(currentPlan?.max_documents || 10);
+
+    } catch (error) {
+      console.error('Error loading document usage:', error);
+    } finally {
+      setLoadingUsage(false);
+    }
+  };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -147,6 +182,12 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
           : f
       ));
 
+      // Track document upload usage
+      await trackUsage('document_upload');
+      
+      // Update current document count
+      setCurrentDocumentCount(prev => prev + 1);
+
     } catch (error) {
       setFiles(prev => prev.map(f => 
         f.id === fileUpload.id 
@@ -219,6 +260,19 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
             <p className="text-xs text-gray-500">
               Supports PDF, DOCX, and TXT files up to 10MB each
             </p>
+            {!loadingUsage && (
+              <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                <p className="text-xs text-blue-700 font-medium">
+                  Documents uploaded: {currentDocumentCount}
+                  {maxDocumentLimit !== -1 ? `/${maxDocumentLimit}` : ' (unlimited)'}
+                </p>
+                {maxDocumentLimit !== -1 && currentDocumentCount >= maxDocumentLimit && (
+                  <p className="text-xs text-red-600 mt-1">
+                    Upload limit reached. Upgrade your plan for more uploads.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

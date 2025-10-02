@@ -186,6 +186,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         isLoading: false
       }));
 
+      // Track usage for the message exchange
+      await trackUsage('chat_message');
+
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'An error occurred',

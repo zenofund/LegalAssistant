@@ -134,7 +134,7 @@ export async function trackUsage(feature: string, metadata: Record<string, any> 
   
   if (!user) return;
 
-  await supabase
+  const { error } = await supabase
     .from('usage_tracking')
     .upsert({
       user_id: user.id,
@@ -145,4 +145,8 @@ export async function trackUsage(feature: string, metadata: Record<string, any> 
     }, {
       onConflict: 'user_id,feature,date'
     });
+
+  if (error) {
+    console.error('Error tracking usage:', error);
+  }
 }

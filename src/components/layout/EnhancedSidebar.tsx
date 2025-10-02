@@ -231,11 +231,11 @@ export function EnhancedSidebar({
 
       {/* --- MOVED LOGIC HERE --- */}
       {/* This section now correctly sits outside the map loop */}
-      {profile?.subscription?.plan && (
+      {!loadingChatUsage && (
         <div className="px-4 py-2 text-center text-xs text-gray-500 border-t border-gray-200">
-          {profile.subscription.plan.max_chats_per_day === -1 
+          {maxDailyChatLimit === -1 
             ? 'Unlimited messages' 
-            : `Daily limit: ${profile.subscription.plan.max_chats_per_day} messages`
+            : `Daily usage: ${currentDailyChatCount}/${maxDailyChatLimit} messages`
           }
         </div>
       )}

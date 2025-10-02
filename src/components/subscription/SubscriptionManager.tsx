@@ -15,7 +15,7 @@ interface SubscriptionManagerProps {
 }
 
 export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProps) {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
@@ -24,6 +24,8 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
   useEffect(() => {
     if (isOpen) {
       loadPlans();
+      // Refresh profile when modal opens to get latest subscription data
+      refreshProfile();
     }
   }, [isOpen]);
 

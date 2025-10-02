@@ -180,10 +180,21 @@ export function EnhancedChatInterface() {
             </div>
           </form>
           
-          {/* Usage indicator for free tier */}
-          {profile.subscription?.plan?.tier === 'free' && (
+          {/* Usage indicator */}
+          {!loadingUsage && (
             <div className="mt-2 text-xs text-gray-500 text-center">
-              Daily limit: {profile.subscription.plan.max_chats_per_day} messages
+              {maxChatLimit === -1 ? (
+                <span>Unlimited messages</span>
+              ) : (
+                <span>
+                  Daily usage: {currentChatCount}/{maxChatLimit} messages
+                  {currentChatCount >= maxChatLimit && (
+                    <span className="text-red-600 ml-2">
+                      (Limit reached - upgrade for more)
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
           )}
         </div>
