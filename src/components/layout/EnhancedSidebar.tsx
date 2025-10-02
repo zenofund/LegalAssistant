@@ -45,7 +45,7 @@ export function EnhancedSidebar({
   onShowAdmin
 }: EnhancedSidebarProps) {
   const { profile, signOut } = useAuth();
-  const { createNewSession, clearMessages, loadSession } = useChatStore();
+  const { createNewSession, loadSession } = useChatStore();
   const [chatSessions, setChatSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,7 +79,8 @@ export function EnhancedSidebar({
   const handleNewChat = async () => {
     setLoading(true);
     try {
-      await createNewSession();
+      const newSessionId = await createNewSession();
+      setSelectedSession(newSessionId); // Select the new session
       await loadChatSessions();
     } catch (error) {
       console.error('Error creating new chat:', error);
@@ -210,6 +211,8 @@ export function EnhancedSidebar({
             </div>
           ) : (
             <div className="space-y-1">
+              {/* --- FIX STARTS HERE --- */}
+              {/* The map loop now only contains the ChatSessionItem component */}
               {filteredSessions.map((session) => (
                 <ChatSessionItem
                   key={session.id}
@@ -217,16 +220,25 @@ export function EnhancedSidebar({
                   isSelected={selectedSession === session.id}
                   onClick={() => handleSessionClick(session.id)}
                   onArchive={() => archiveSession(session.id)}
-          {profile.subscription?.plan && (
+                  onDelete={() => deleteSession(session.id)}
                 />
-              {profile.subscription.plan.max_chats_per_day === -1 
-                ? 'Unlimited messages' 
-                : `Daily limit: ${profile.subscription.plan.max_chats_per_day} messages`
-              }
+              ))}
+              {/* --- FIX ENDS HERE --- */}
             </div>
           )}
         </div>
       </div>
+
+      {/* --- MOVED LOGIC HERE --- */}
+      {/* This section now correctly sits outside the map loop */}
+      {profile?.subscription?.plan && (
+        <div className="px-4 py-2 text-center text-xs text-gray-500 border-t border-gray-200">
+          {profile.subscription.plan.max_chats_per_day === -1 
+            ? 'Unlimited messages' 
+            : `Daily limit: ${profile.subscription.plan.max_chats_per_day} messages`
+          }
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="border-t border-gray-200 p-4">
