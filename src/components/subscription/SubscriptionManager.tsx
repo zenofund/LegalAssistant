@@ -143,7 +143,7 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
       isOpen={isOpen}
       onClose={onClose}
       title="Subscription Plans"
-      maxWidth="2xl"
+      maxWidth="4xl"
     >
       <div className="space-y-6">
         {/* Current Plan Status */}
