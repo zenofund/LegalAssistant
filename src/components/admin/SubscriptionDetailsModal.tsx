@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SubscriptionDetailsModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function SubscriptionDetailsModal({
   subscription, 
   onUpdateSuccess 
 }: SubscriptionDetailsModalProps) {
+  const { user: currentUser, refreshProfile } = useAuth();
   const [status, setStatus] = useState('');
   const [planId, setPlanId] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -79,6 +81,11 @@ export function SubscriptionDetailsModal({
       if (error) throw error;
 
       onUpdateSuccess();
+      
+      // If the current user's subscription was edited, refresh their profile
+      if (currentUser && subscription && currentUser.id === subscription.user_id) {
+        await refreshProfile();
+      }
     } catch (error) {
       console.error('Error updating subscription:', error);
       alert('Failed to update subscription. Please try again.');

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { ChatMessage } from '../types/database';
+import type { UserProfile } from '../types/database';
 
 interface ChatStore {
   currentSession: string | null;
@@ -73,6 +74,43 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) throw new Error('User not authenticated');
+
+    // Get current user profile to check limits
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select(`
+        *,
+        subscriptions (
+          *,
+          plan:plans (*)
+        )
+      `)
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      throw new Error('Failed to load user profile');
+    }
+
+    // Check chat limits
+    const currentPlan = profile.subscriptions?.[0]?.plan;
+    if (currentPlan && currentPlan.max_chats_per_day !== -1) {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: usageData, error: usageError } = await supabase
+        .from('usage_tracking')
+        .select('count')
+        .eq('user_id', user.id)
+        .eq('feature', 'chat_message')
+        .eq('date', today)
+        .single();
+
+      const currentUsage = usageData?.count || 0;
+      
+      if (currentUsage >= currentPlan.max_chats_per_day) {
+        throw new Error(`Daily chat limit reached (${currentPlan.max_chats_per_day} messages). Upgrade your plan for more messages.`);
+      }
+    }
 
     set({ isLoading: true, error: null });
 

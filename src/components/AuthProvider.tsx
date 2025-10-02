@@ -12,6 +12,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error?: any }>;
+  refreshProfile: () => Promise<void>;
 }
 
 // Create and export the AuthContext
@@ -207,6 +208,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return {};
   };
 
+  const refreshProfile = async () => {
+    console.log('🔄 AuthProvider: refreshProfile called');
+    if (!user) {
+      console.log('❌ AuthProvider: No user to refresh profile for');
+      return;
+    }
+
+    try {
+      console.log('🔍 AuthProvider: Fetching fresh profile data for user:', user.id);
+      const { data: userProfile, error } = await supabase
+        .from('users')
+        .select(`
+          *,
+          subscriptions (
+            *,
+            plan:plans (*)
+          )
+        `)
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('❌ AuthProvider: Error refreshing profile:', error);
+        return;
+      }
+
+      if (userProfile) {
+        console.log('✅ AuthProvider: Profile refreshed successfully');
+        setProfile(userProfile);
+      }
+    } catch (error) {
+      console.error('💥 AuthProvider: Exception during profile refresh:', error);
+    }
+  };
+
   const authContextValue: AuthContextType = {
     user,
     profile,
@@ -214,7 +250,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signUp,
     signOut,
-    updateProfile
+    updateProfile,
+    refreshProfile
   };
 
   return (

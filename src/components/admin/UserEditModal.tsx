@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabase';
 import { formatDate } from '../../lib/utils';
+import { useAuth } from '../../hooks/useAuth';
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function UserEditModal({
   user, 
   onUpdateSuccess 
 }: UserEditModalProps) {
+  const { user: currentUser, refreshProfile } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('user');
@@ -51,6 +53,12 @@ export function UserEditModal({
       if (error) throw error;
 
       onUpdateSuccess();
+      
+      // If the current user was edited, refresh their profile
+      if (currentUser && currentUser.id === user.id) {
+        await refreshProfile();
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error updating user:', error);

@@ -69,6 +69,44 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const uploadFile = async (fileUpload: FileUpload) => {
     if (!profile) return;
 
+    // Check document upload limits
+    const currentPlan = profile.subscription?.plan;
+    if (currentPlan && currentPlan.max_documents !== -1) {
+      try {
+        const { count, error: countError } = await supabase
+          .from('documents')
+          .select('id', { count: 'exact' })
+          .eq('uploaded_by', profile.id);
+
+        if (countError) throw countError;
+
+        if ((count || 0) >= currentPlan.max_documents) {
+          setFiles(prev => prev.map(f => 
+            f.id === fileUpload.id 
+              ? { 
+                  ...f, 
+                  status: 'error', 
+                  error: `Document limit reached (${currentPlan.max_documents}). Upgrade your plan for more uploads.`
+                }
+              : f
+          ));
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking document limits:', error);
+        setFiles(prev => prev.map(f => 
+          f.id === fileUpload.id 
+            ? { 
+                ...f, 
+                status: 'error', 
+                error: 'Failed to check upload limits. Please try again.'
+              }
+            : f
+        ));
+        return;
+      }
+    }
+
     try {
       setFiles(prev => prev.map(f => 
         f.id === fileUpload.id 

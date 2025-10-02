@@ -217,9 +217,12 @@ export function EnhancedSidebar({
                   isSelected={selectedSession === session.id}
                   onClick={() => handleSessionClick(session.id)}
                   onArchive={() => archiveSession(session.id)}
-                  onDelete={() => deleteSession(session.id)}
+          {profile.subscription?.plan && (
                 />
-              ))}
+              {profile.subscription.plan.max_chats_per_day === -1 
+                ? 'Unlimited messages' 
+                : `Daily limit: ${profile.subscription.plan.max_chats_per_day} messages`
+              }
             </div>
           )}
         </div>

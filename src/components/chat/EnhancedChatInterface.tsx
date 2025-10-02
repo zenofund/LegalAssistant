@@ -62,6 +62,13 @@ export function EnhancedChatInterface() {
       setMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Show user-friendly error message for usage limits
+      if (error instanceof Error && error.message.includes('Daily chat limit reached')) {
+        alert(error.message);
+      } else {
+        alert('Failed to send message. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
