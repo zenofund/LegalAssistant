@@ -192,9 +192,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       await supabase
         .from('chat_sessions')
         .update({
-          message_count: state.messages.length + 2, // +2 for user and AI messages
+          message_count: get().messages.length + 2, // +2 for user and AI messages
           last_message_at: new Date().toISOString(),
-          title: state.messages.length === 0 ? content.slice(0, 50) + '...' : undefined
+          title: get().messages.length === 0 ? content.slice(0, 50) + '...' : undefined
         })
         .eq('id', sessionId);
 
