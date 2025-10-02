@@ -71,6 +71,8 @@ export function useAuthProvider(): AuthContextType {
   };
 
   const signUp = async (email: string, password: string, name: string) => {
+    console.log('Starting signUp process for email:', email);
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -82,11 +84,16 @@ export function useAuthProvider(): AuthContextType {
     });
 
     if (error) {
+      console.error('Supabase auth signUp error:', error);
       return { error };
     }
 
+    console.log('Auth signUp successful, user data:', data.user?.id);
+
     // Create user profile
     if (data.user) {
+      console.log('Creating user profile in public.users table for ID:', data.user.id);
+      
       const { error: profileError } = await supabase
         .from('users')
         .insert({
@@ -97,9 +104,21 @@ export function useAuthProvider(): AuthContextType {
         });
 
       if (profileError) {
-        return { error: profileError };
+        console.error('Error creating user profile in public.users:', profileError);
+        
+        // Check if it's a duplicate key error (user already exists)
+        if (profileError.code === '23505') {
+          console.log('User profile already exists, continuing...');
+        } else {
+          // For other errors, we should still return success for auth
+          // but log the profile creation failure
+          console.error('Profile creation failed but auth user created. User will need manual profile creation.');
+        }
+      } else {
+        console.log('User profile successfully created in public.users for ID:', data.user.id);
       }
-    }
+    } else {
+      console.warn('No user data returned from Supabase auth signUp, profile not created.');
 
     return {};
   };
