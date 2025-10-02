@@ -396,7 +396,7 @@ function SubscriptionsTab() {
                         {formatCurrency(sub.plan?.price || 0)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatDate(sub.start_date)}
+                        {sub.start_date ? formatDate(sub.start_date) : 'N/A'}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
