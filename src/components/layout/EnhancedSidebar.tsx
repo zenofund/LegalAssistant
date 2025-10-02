@@ -45,17 +45,37 @@ export function EnhancedSidebar({
   onShowAdmin
 }: EnhancedSidebarProps) {
   const { profile, signOut } = useAuth();
-  const { createNewSession, loadSession } = useChatStore();
+  const { createNewSession, loadSession, currentSession } = useChatStore();
   const [chatSessions, setChatSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [maxDailyChatLimit, setMaxDailyChatLimit] = useState(50);
+
+  // Sync selectedSession with currentSession from store
+  useEffect(() => {
+    setSelectedSession(currentSession);
+  }, [currentSession]);
 
   useEffect(() => {
     if (profile) {
       loadChatUsage();
+      loadChatSessions();
     }
   }, [profile]);
+
+  const loadChatUsage = async () => {
+    if (!profile) return;
+
+    try {
+      // Get max chat limit from current plan
+      const currentPlan = profile.subscription?.plan;
+      setMaxDailyChatLimit(currentPlan?.max_chats_per_day || 50);
+    } catch (error) {
+      console.error('Error loading chat usage:', error);
+    }
+  };
+
   const loadChatSessions = async () => {
     if (!profile) return;
 
@@ -79,7 +99,6 @@ export function EnhancedSidebar({
     setLoading(true);
     try {
       const newSessionId = await createNewSession();
-      setSelectedSession(newSessionId); // Select the new session
       await trackUsage('chat_session_creation');
       await loadChatSessions();
     } catch (error) {
@@ -90,7 +109,6 @@ export function EnhancedSidebar({
   };
 
   const handleSessionClick = async (sessionId: string) => {
-    setSelectedSession(sessionId);
     try {
       await loadSession(sessionId);
     } catch (error) {
