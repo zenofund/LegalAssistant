@@ -19,14 +19,23 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
 
 // Helper function to get current user with profile
 export async function getCurrentUser() {
+  console.log('🔍 getCurrentUser: Starting user fetch...');
+  
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
+  console.log('🔍 getCurrentUser: Auth result:', { 
+    userId: user?.id, 
+    userEmail: user?.email,
+    authError: authError?.message 
+  });
+  
   if (authError || !user) {
-    console.log('No authenticated user found:', authError);
+    console.log('❌ getCurrentUser: No authenticated user found:', authError);
     return { user: null, profile: null, error: authError };
   }
 
-  console.log('Authenticated user ID:', user.id);
+  console.log('✅ getCurrentUser: Authenticated user ID:', user.id);
+  console.log('🔍 getCurrentUser: Fetching profile from public.users...');
 
   const { data: profile, error: profileError } = await supabase
     .from('users')
@@ -40,7 +49,21 @@ export async function getCurrentUser() {
     .eq('id', user.id)
     .maybeSingle();
 
-  console.log('Profile query result:', { profile, profileError });
+  console.log('🔍 getCurrentUser: Profile query result:', { 
+    profileFound: !!profile,
+    profileId: profile?.id,
+    profileName: profile?.name,
+    profileError: profileError?.message,
+    subscriptionFound: !!profile?.subscriptions?.length
+  });
+
+  if (profileError) {
+    console.error('❌ getCurrentUser: Profile fetch error:', profileError);
+  } else if (!profile) {
+    console.warn('⚠️ getCurrentUser: No profile found for user ID:', user.id);
+  } else {
+    console.log('✅ getCurrentUser: Profile loaded successfully');
+  }
 
   return {
     user,

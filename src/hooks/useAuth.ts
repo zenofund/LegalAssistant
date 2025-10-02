@@ -28,12 +28,28 @@ export function useAuthProvider(): AuthContextType {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('🚀 useAuthProvider: Hook initialized, loading:', loading);
+
   useEffect(() => {
+    console.log('🔄 useAuthProvider: useEffect triggered - getting initial session');
+    
     // Get initial session
     const getInitialSession = async () => {
+      console.log('🔍 useAuthProvider: getInitialSession started');
+      
       const { user: currentUser, profile: currentProfile } = await getCurrentUser();
+      
+      console.log('🔍 useAuthProvider: getInitialSession result:', {
+        hasUser: !!currentUser,
+        userId: currentUser?.id,
+        hasProfile: !!currentProfile,
+        profileName: currentProfile?.name
+      });
+      
       setUser(currentUser);
       setProfile(currentProfile);
+      
+      console.log('✅ useAuthProvider: Setting loading to false');
       setLoading(false);
     };
 
@@ -42,17 +58,35 @@ export function useAuthProvider(): AuthContextType {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 useAuthProvider: Auth state change:', {
+          event,
+          hasSession: !!session,
+          userId: session?.user?.id
+        });
+        
         if (session?.user) {
+          console.log('🔍 useAuthProvider: Session found, fetching profile...');
           const { profile: currentProfile } = await getCurrentUser();
+          
+          console.log('🔍 useAuthProvider: Profile fetch complete:', {
+            hasProfile: !!currentProfile,
+            profileName: currentProfile?.name
+          });
+          
           setUser(session.user);
           setProfile(currentProfile);
         } else {
+          console.log('❌ useAuthProvider: No session, clearing user data');
           setUser(null);
           setProfile(null);
         }
+        
+        console.log('✅ useAuthProvider: Auth state change complete, setting loading to false');
         setLoading(false);
       }
     );
+
+    console.log('🔄 useAuthProvider: Auth listener setup complete');
 
     return () => subscription.unsubscribe();
   }, []);
