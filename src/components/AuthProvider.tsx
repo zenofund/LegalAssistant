@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, getCurrentUser } from '../lib/supabase';
+import { supabase } from '../lib/supabase'; // Assuming getCurrentUser is no longer needed here
 import type { UserProfile } from '../types/database';
 
 // Define the AuthContextType interface
@@ -26,34 +26,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // --- UPDATED useEffect HOOK ---
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { user: currentUser, profile: currentProfile } = await getCurrentUser();
-      setUser(currentUser);
-      setProfile(currentProfile);
-      setLoading(false);
-    };
+    setLoading(true);
 
-    getInitialSession();
-
-    // Listen for auth changes
+    // onAuthStateChange handles the initial session check automatically.
+    // It fires once on load with the current session or null.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         if (session?.user) {
-          const { profile: currentProfile } = await getCurrentUser();
+          // When a session is found, fetch the associated profile
+          const { data: userProfile, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching profile:', error);
+            setProfile(null);
+          } else {
+            setProfile(userProfile);
+          }
+          
           setUser(session.user);
-          setProfile(currentProfile);
         } else {
+          // If no session, clear user and profile
           setUser(null);
           setProfile(null);
         }
+        
+        // The loading state should only be set to false once,
+        // after the initial auth check is complete.
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []); // Empty dependency array to run only once on mount
+    // Unsubscribe from the listener when the component unmounts
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -93,10 +106,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       };
       
       console.log('🔍 SignUp: Attempting to insert user profile with data:', userProfileData);
-      console.log('🔍 SignUp: User ID from auth:', data.user.id);
-      console.log('🔍 SignUp: Email:', email);
-      console.log('🔍 SignUp: Name:', name);
-      console.log('🔍 SignUp: Role (should be "user"):', userProfileData.role);
       
       const { error: profileError } = await supabase
         .from('users')
@@ -104,12 +113,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (profileError) {
         console.error('❌ SignUp: Profile creation error:', profileError);
-        console.error('❌ SignUp: Error details:', {
-          message: profileError.message,
-          details: profileError.details,
-          hint: profileError.hint,
-          code: profileError.code
-        });
         return { error: profileError };
       } else {
         console.log('✅ SignUp: User profile created successfully');
@@ -131,15 +134,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { error } = await supabase
       .from('users')
       .update(updates)
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .select() // It's good practice to select the updated data
+      .single();
 
     if (error) {
       return { error };
     }
 
-    // Refresh profile
-    const { profile: updatedProfile } = await getCurrentUser();
-    setProfile(updatedProfile);
+    // After a successful update, refresh the profile state with the new data
+    // This avoids another network request.
+    setProfile((prevProfile) => ({ ...prevProfile, ...updates }));
 
     return {};
   };
