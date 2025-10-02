@@ -78,7 +78,13 @@ function ProfileSettings({ profile, updateProfile }: any) {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      await updateProfile({ name });
+      const result = await updateProfile({ name });
+      if (result.error) {
+        console.error('Profile update error:', result.error);
+        // You could add a toast notification here
+      } else {
+        console.log('Profile updated successfully');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {

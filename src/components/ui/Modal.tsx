@@ -79,7 +79,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'md' }: Mod
                   </Button>
                 </div>
               )}
-              <div className="p-6">
+              <div className="p-6 overflow-y-auto max-h-[80vh]">
                 {children}
               </div>
             </motion.div>

@@ -80,7 +80,6 @@ export function EnhancedSidebar({
     setLoading(true);
     try {
       await createNewSession();
-      clearMessages();
       await loadChatSessions();
     } catch (error) {
       console.error('Error creating new chat:', error);
