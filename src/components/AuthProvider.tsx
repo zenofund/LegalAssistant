@@ -91,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: data.user.id,
           email,
           name,
-          role: 'user'
+          role: 'free'
         });
 
       if (profileError) {

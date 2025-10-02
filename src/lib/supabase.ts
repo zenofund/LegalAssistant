@@ -75,7 +75,7 @@ export async function getCurrentUser() {
       .from('users')
       .select(`
         *,
-        subscriptions (
+        subscriptions!fk_users_subscription (
           *,
           plan:plans (*)
         )
