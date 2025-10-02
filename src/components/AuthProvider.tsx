@@ -26,88 +26,93 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
-  // --- UPDATED useEffect HOOK ---
   useEffect(() => {
-    console.log('🚀 AuthProvider: useEffect triggered - Setting up auth listener');
-    setLoading(true);
-    console.log('⏳ AuthProvider: Loading state set to true');
+    console.log('🚀 AuthProvider: Setting up auth listener');
 
-    // onAuthStateChange handles the initial session check automatically.
-    // It fires once on load with the current session or null.
+    let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log('🔄 AuthProvider: onAuthStateChange callback triggered');
-        console.log('📋 AuthProvider: Event:', _event);
+        if (!mounted) return;
+
+        console.log('🔄 AuthProvider: Auth state change:', _event);
         console.log('🎫 AuthProvider: Session:', session ? 'exists' : 'null');
-        console.log('👤 AuthProvider: User ID:', session?.user?.id || 'none');
-        console.log('📧 AuthProvider: User Email:', session?.user?.email || 'none');
-        
+
+        clearTimeout(timeoutId);
+
         if (session?.user) {
           console.log('✅ AuthProvider: User session found, fetching profile...');
-          // When a session is found, fetch the associated profile
           try {
-            console.log('🔍 AuthProvider: Querying users table for ID:', session.user.id);
             const { data: userProfile, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+              .from('users')
+              .select(`
+                *,
+                subscriptions (
+                  *,
+                  plan:plans (*)
+                )
+              `)
+              .eq('id', session.user.id)
+              .maybeSingle();
 
-            console.log('📊 AuthProvider: Profile query result:', {
-              profileFound: !!userProfile,
-              profileId: userProfile?.id,
-              profileName: userProfile?.name,
-              profileRole: userProfile?.role,
-              error: error?.message
-            });
+            if (!mounted) return;
 
             if (error) {
               console.error('❌ AuthProvider: Error fetching profile:', error);
-              console.error('❌ AuthProvider: Error details:', {
-                code: error.code,
-                message: error.message,
-                details: error.details,
-                hint: error.hint
-              });
+              setUser(session.user);
               setProfile(null);
             } else if (userProfile) {
-              console.log('✅ AuthProvider: Profile loaded successfully:', userProfile.name);
+              console.log('✅ AuthProvider: Profile loaded:', userProfile.name);
+              setUser(session.user);
               setProfile(userProfile);
             } else {
-              console.warn('⚠️ AuthProvider: No profile found for user ID:', session.user.id);
+              console.warn('⚠️ AuthProvider: No profile found for user:', session.user.id);
+              setUser(session.user);
               setProfile(null);
             }
           } catch (profileError) {
             console.error('💥 AuthProvider: Exception during profile fetch:', profileError);
+            if (mounted) {
+              setUser(session.user);
+              setProfile(null);
+            }
+          }
+        } else {
+          console.log('❌ AuthProvider: No user session');
+          if (mounted) {
+            setUser(null);
             setProfile(null);
           }
-          
-          console.log('👤 AuthProvider: Setting user state');
-          setUser(session.user);
-        } else {
-          console.log('❌ AuthProvider: No user session found, clearing states');
-          // If no session, clear user and profile
-          setUser(null);
-          setProfile(null);
         }
-        
-        console.log('🏁 AuthProvider: Setting loading to false');
-        // The loading state should only be set to false once,
-        // after the initial auth check is complete.
-        setLoading(false);
-        console.log('✅ AuthProvider: Auth state update complete');
+
+        if (mounted && !initialized) {
+          console.log('✅ AuthProvider: Initial auth check complete');
+          setLoading(false);
+          setInitialized(true);
+        }
       }
     );
 
+    timeoutId = setTimeout(() => {
+      if (!initialized && mounted) {
+        console.warn('⏰ AuthProvider: Auth check timeout, clearing loading state');
+        setLoading(false);
+        setInitialized(true);
+      }
+    }, 10000);
+
     console.log('🎧 AuthProvider: Auth listener setup complete');
-    
-    // Unsubscribe from the listener when the component unmounts
+
     return () => {
-      console.log('🧹 AuthProvider: Cleaning up auth listener');
+      console.log('🧹 AuthProvider: Cleaning up');
+      mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 AuthProvider: signIn called for email:', email);
@@ -227,7 +232,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           )
         `)
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('❌ AuthProvider: Error refreshing profile:', error);
