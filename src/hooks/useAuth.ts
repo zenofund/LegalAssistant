@@ -2,7 +2,7 @@
 
 import { useContext } from 'react';
 // Make sure this import path points to your new AuthProvider.tsx file
-import { AuthContext, AuthContextType } from '../providers/AuthProvider';
+import { AuthContext, AuthContextType } from '../components/AuthProvider';
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
