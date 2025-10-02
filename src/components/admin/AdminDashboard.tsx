@@ -11,49 +11,7 @@ import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button'; // Assuming Button component exists
 import { Modal } from '../ui/Modal'; // Assuming Modal component exists
 import { Input } from '../ui/Input'; // Assuming Input component exists
-
-// --- Error Boundary Component ---
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false
-  };
-
-  public static getDerivedStateFromError(_: Error): ErrorBoundaryState {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true };
-  }
-
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // You can log the error to an error reporting service here
-    console.error("Uncaught error in component:", error, errorInfo);
-  }
-
-  public render() {
-    if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return (
-        <div className="p-8 text-center bg-red-50 border border-red-200 rounded-lg">
-            <h2 className="text-xl font-bold text-red-800">Something went wrong.</h2>
-            <p className="text-red-600 mt-2">
-                An error occurred in this section. Please try refreshing the page or contacting support.
-            </p>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-// --- End of Error Boundary Component ---
-
+import { ErrorBoundary } from '../ErrorBoundary';
 
 interface AdminStats {
   totalUsers: number;

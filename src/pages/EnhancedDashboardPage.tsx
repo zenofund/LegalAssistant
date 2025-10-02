@@ -7,6 +7,7 @@ import { SettingsModal } from '../components/settings/SettingsModal';
 import { SubscriptionManager } from '../components/subscription/SubscriptionManager';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { Button } from '../components/ui/Button';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuth } from '../hooks/useAuth';
 import { hasPermission } from '../lib/supabase';
 
@@ -62,7 +63,26 @@ export function EnhancedDashboardPage() {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          <EnhancedChatInterface />
+          <ErrorBoundary
+            fallback={
+              <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <div className="text-center max-w-md p-8">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">⚠️</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Chat Interface Error</h2>
+                  <p className="text-gray-600 mb-4">
+                    The chat interface encountered an error. Please refresh the page to continue.
+                  </p>
+                  <Button onClick={() => window.location.reload()}>
+                    Refresh Page
+                  </Button>
+                </div>
+              </div>
+            }
+          >
+            <EnhancedChatInterface />
+          </ErrorBoundary>
         </main>
       </div>
 
