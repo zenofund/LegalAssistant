@@ -85,18 +85,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Create user profile
     if (data.user) {
+      const userProfileData = {
+        id: data.user.id,
+        email,
+        name,
+        role: 'user' as const
+      };
+      
+      console.log('🔍 SignUp: Attempting to insert user profile with data:', userProfileData);
+      console.log('🔍 SignUp: User ID from auth:', data.user.id);
+      console.log('🔍 SignUp: Email:', email);
+      console.log('🔍 SignUp: Name:', name);
+      console.log('🔍 SignUp: Role (should be "user"):', userProfileData.role);
+      
       const { error: profileError } = await supabase
         .from('users')
-        .insert({
-          id: data.user.id,
-          email,
-          name,
-          role: 'user'
-        });
+        .insert(userProfileData);
 
       if (profileError) {
-        console.error('Profile creation error:', profileError);
+        console.error('❌ SignUp: Profile creation error:', profileError);
+        console.error('❌ SignUp: Error details:', {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code
+        });
         return { error: profileError };
+      } else {
+        console.log('✅ SignUp: User profile created successfully');
       }
     }
 
