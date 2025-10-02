@@ -20,13 +20,16 @@ import {
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
-import { trackUsage } from '../../lib/supabase';
+import { trackUsage, supabase } from '../../lib/supabase';
 import { formatDate } from '../../lib/utils';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
 export function EnhancedChatInterface() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingUsage, setLoadingUsage] = useState(true);
+  const [currentChatCount, setCurrentChatCount] = useState(0);
+  const [maxChatLimit, setMaxChatLimit] = useState(50);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
@@ -44,6 +47,47 @@ export function EnhancedChatInterface() {
     }
   }, [message]);
 
+  useEffect(() => {
+    if (profile) {
+      loadCurrentUsage();
+    }
+  }, [profile]);
+
+  const loadCurrentUsage = async () => {
+    if (!profile) return;
+
+    setLoadingUsage(true);
+    try {
+      // Get current date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get current chat count for today
+      const { data: usageData, error: usageError } = await supabase
+        .from('usage_tracking')
+        .select('count')
+        .eq('user_id', profile.id)
+        .eq('feature', 'chat_message')
+        .eq('date', today)
+        .single();
+
+      if (usageError && usageError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error loading usage data:', usageError);
+      }
+
+      const currentCount = usageData?.count || 0;
+      setCurrentChatCount(currentCount);
+
+      // Get max chat limit from current plan
+      const currentPlan = profile.subscription?.plan;
+      const maxLimit = currentPlan?.max_chats_per_day || 50;
+      setMaxChatLimit(maxLimit);
+
+    } catch (error) {
+      console.error('Error loading current usage:', error);
+    } finally {
+      setLoadingUsage(false);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -59,6 +103,9 @@ export function EnhancedChatInterface() {
 
       await sendMessage(sessionId, message.trim());
       await trackUsage('chat_message');
+      
+      // Update local usage count
+      setCurrentChatCount(prev => prev + 1);
       setMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
