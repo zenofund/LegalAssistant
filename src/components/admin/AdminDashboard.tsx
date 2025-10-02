@@ -1,13 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download } from 'lucide-react';
+import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, Edit, Trash2, Eye, Download } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, hasPermission } from '../../lib/supabase';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, formatDate } from '../../lib/utils'; // Assuming formatDate exists
 import { SubscriptionDetailsModal } from './SubscriptionDetailsModal';
 import { UsersTab } from './UsersTab';
 import { DocumentsTab } from './DocumentsTab';
 import { Card, CardHeader, CardContent } from '../ui/Card';
+import { Button } from '../ui/Button'; // Assuming Button component exists
+import { Modal } from '../ui/Modal'; // Assuming Modal component exists
+import { Input } from '../ui/Input'; // Assuming Input component exists
+
+// --- Error Boundary Component ---
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false
+  };
+
+  public static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+    // Update state so the next render will show the fallback UI.
+    return { hasError: true };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // You can log the error to an error reporting service here
+    console.error("Uncaught error in component:", error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return (
+        <div className="p-8 text-center bg-red-50 border border-red-200 rounded-lg">
+            <h2 className="text-xl font-bold text-red-800">Something went wrong.</h2>
+            <p className="text-red-600 mt-2">
+                An error occurred in this section. Please try refreshing the page or contacting support.
+            </p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+// --- End of Error Boundary Component ---
+
 
 interface AdminStats {
   totalUsers: number;
@@ -119,12 +165,14 @@ export function AdminDashboard() {
           </nav>
         </div>
 
-        {/* Content */}
-        {activeTab === 'overview' && <OverviewTab stats={stats} loading={loading} />}
-        {activeTab === 'users' && <UsersTab />}
-        {activeTab === 'documents' && <DocumentsTab />}
-        {activeTab === 'subscriptions' && <SubscriptionsTab />}
-        {activeTab === 'notifications' && <NotificationsTab />}
+        {/* Content - WRAPPED WITH ERROR BOUNDARY */}
+        <ErrorBoundary>
+            {activeTab === 'overview' && <OverviewTab stats={stats} loading={loading} />}
+            {activeTab === 'users' && <UsersTab />}
+            {activeTab === 'documents' && <DocumentsTab />}
+            {activeTab === 'subscriptions' && <SubscriptionsTab />}
+            {activeTab === 'notifications' && <NotificationsTab />}
+        </ErrorBoundary>
       </div>
     </div>
   );
@@ -262,9 +310,6 @@ function OverviewTab({ stats, loading }: { stats: AdminStats | null; loading: bo
   );
 }
 
-
-
-
 function SubscriptionsTab() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -290,6 +335,8 @@ function SubscriptionsTab() {
       setSubscriptions(data || []);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
+      // This is where the Error Boundary will catch the error if you re-throw it
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -461,6 +508,7 @@ function NotificationsTab() {
       setNotifications(data || []);
     } catch (error) {
       console.error('Error loading notifications:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -665,9 +713,9 @@ function NotificationsTab() {
             </Button>
             <Button 
               onClick={handleCreateNotification}
-              loading={isCreatingNotification}
+              // loading={isCreatingNotification} // Assuming your button has a loading prop
             >
-              Create Notification
+              {isCreatingNotification ? 'Creating...' : 'Create Notification'}
             </Button>
           </div>
         </div>
