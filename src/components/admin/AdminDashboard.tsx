@@ -989,10 +989,9 @@ function NotificationsTab() {
             onChange={(e) => setNewNotificationExpiresAt(e.target.value)}
           />
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+            <Button variant="outline" onClick={handleCancelCreate} disabled={isCreatingNotification}>
               Cancel
-              onClick={handleCancelCreate}
-              disabled={isCreatingNotification}
+            </Button>
             <Button 
               onClick={handleCreateNotification}
               loading={isCreatingNotification}
