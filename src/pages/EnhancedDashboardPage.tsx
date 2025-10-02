@@ -30,14 +30,35 @@ export function EnhancedDashboardPage() {
 
   return (
     <div className="h-screen flex bg-gray-50">
-      <EnhancedSidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onShowUpload={() => setShowUpload(true)}
-        onShowSettings={() => setShowSettings(true)}
-        onShowSubscription={() => setShowSubscription(true)}
-        onShowAdmin={() => setShowAdmin(true)}
-      />
+      <ErrorBoundary
+        fallback={
+          <div className="hidden lg:flex lg:w-80 lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 bg-white border-r border-gray-200">
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center max-w-sm">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Sidebar Error</h3>
+                <p className="text-gray-600 mb-4 text-sm">
+                  The sidebar encountered an error. Please refresh the page to restore functionality.
+                </p>
+                <Button onClick={() => window.location.reload()} size="sm">
+                  Refresh Page
+                </Button>
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <EnhancedSidebar
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onShowUpload={() => setShowUpload(true)}
+          onShowSettings={() => setShowSettings(true)}
+          onShowSubscription={() => setShowSubscription(true)}
+          onShowAdmin={() => setShowAdmin(true)}
+        />
+      </ErrorBoundary>
 
       <div className="flex-1 lg:ml-80 flex flex-col">
         {/* Mobile Header */}
