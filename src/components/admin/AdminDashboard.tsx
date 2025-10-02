@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell } from 'lucide-react';
+import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, Edit, Trash2, Eye, Download } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, hasPermission } from '../../lib/supabase';
 import { formatCurrency } from '../../lib/utils';
