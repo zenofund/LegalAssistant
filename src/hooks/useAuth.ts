@@ -119,6 +119,7 @@ export function useAuthProvider(): AuthContextType {
       }
     } else {
       console.warn('No user data returned from Supabase auth signUp, profile not created.');
+    }
 
     return {};
   };
