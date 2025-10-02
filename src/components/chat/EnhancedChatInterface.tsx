@@ -20,7 +20,6 @@ import {
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
-import { useUsage } from '../../hooks/useUsage'; // FIX: Import the useUsage hook
 import { trackUsage } from '../../lib/supabase';
 import { formatDate } from '../../lib/utils';
 import type { ChatMessage, DocumentSource } from '../../types/database';
@@ -32,9 +31,6 @@ export function EnhancedChatInterface() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
   const { currentSession, messages, sendMessage, createNewSession } = useChatStore();
-  
-  // FIX: Call the useUsage hook to get usage data and loading state
-  const { currentChatCount, maxChatLimit, loadingUsage } = useUsage();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
