@@ -15,18 +15,37 @@ export function formatCurrency(amount: number, currency = 'NGN') {
 }
 
 export function formatDate(date: string | Date) {
+  if (!date) {
+    return 'N/A';
+  }
+  
+  const dateObject = new Date(date);
+  
+  if (isNaN(dateObject.getTime())) {
+    return 'Invalid Date';
+  }
+  
   return new Intl.DateTimeFormat('en-NG', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(date));
+  }).format(dateObject);
 }
 
 export function formatRelativeTime(date: string | Date) {
+  if (!date) {
+    return 'N/A';
+  }
+  
   const now = new Date();
   const target = new Date(date);
+  
+  if (isNaN(target.getTime())) {
+    return 'Invalid Date';
+  }
+  
   const diffInSeconds = Math.floor((now.getTime() - target.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
