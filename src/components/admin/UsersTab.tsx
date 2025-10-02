@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Download, Eye, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, Search, Download, Eye, CreditCard as Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
