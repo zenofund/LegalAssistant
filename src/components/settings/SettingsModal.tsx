@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, CreditCard, Bell, Shield, HelpCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -138,7 +138,10 @@ function SubscriptionSettings({ profile }: any) {
   }, [profile]);
 
   const loadUsageData = async () => {
-    if (!profile) return;
+    if (!profile) {
+      setLoadingUsage(false);
+      return;
+    }
 
     setLoadingUsage(true);
     try {
@@ -174,7 +177,7 @@ function SubscriptionSettings({ profile }: any) {
       }
 
       // Get limits from current plan
-      const currentPlan = profile.subscription?.plan;
+      const currentPlan = profile?.subscription?.plan;
       setMaxChatLimit(currentPlan?.max_chats_per_day || 50);
       setMaxDocumentLimit(currentPlan?.max_documents || 10);
 
@@ -185,7 +188,7 @@ function SubscriptionSettings({ profile }: any) {
     }
   };
 
-  const subscription = profile.subscription;
+  const subscription = profile?.subscription;
   const plan = subscription?.plan;
 
   return (
@@ -199,7 +202,7 @@ function SubscriptionSettings({ profile }: any) {
               <div>
                 <h4 className="text-lg font-semibold">{plan?.name || 'Free Plan'}</h4>
                 <p className="text-sm text-gray-600">
-                  {plan?.tier === 'free' ? 'No billing' : `${formatCurrency(plan?.price || 0)} per ${plan?.billing_cycle}`}
+                  {plan?.tier === 'free' ? 'No billing' : `${formatCurrency(plan?.price || 0)} per ${plan?.billing_cycle || 'month'}`}
                 </p>
               </div>
               <div className="text-right">
@@ -245,7 +248,7 @@ function SubscriptionSettings({ profile }: any) {
           </CardContent>
         </Card>
 
-        {plan?.tier === 'free' && (
+        {(!plan || plan?.tier === 'free') && (
           <div className="mt-4">
             <Button className="w-full">
               Upgrade to Pro Plan
