@@ -35,7 +35,22 @@ export async function getCurrentUser() {
   console.log('🔍 getCurrentUser: Starting user fetch...');
   console.log('🔗 Using Supabase URL:', supabase.supabaseUrl);
   
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  let user = null;
+  let authError = null;
+  
+  try {
+    console.log('🔍 getCurrentUser: Calling supabase.auth.getUser()...');
+    const authResult = await supabase.auth.getUser();
+    console.log('🔍 getCurrentUser: supabase.auth.getUser() completed');
+    user = authResult.data.user;
+    authError = authResult.error;
+  } catch (error) {
+    console.error('❌ getCurrentUser: Exception during supabase.auth.getUser():', error);
+    console.error('❌ getCurrentUser: Error type:', typeof error);
+    console.error('❌ getCurrentUser: Error message:', error?.message);
+    console.error('❌ getCurrentUser: Error stack:', error?.stack);
+    return { user: null, profile: null, error };
+  }
   
   console.log('🔍 getCurrentUser: Auth result:', { 
     userId: user?.id, 
@@ -51,17 +66,32 @@ export async function getCurrentUser() {
   console.log('✅ getCurrentUser: Authenticated user ID:', user.id);
   console.log('🔍 getCurrentUser: Fetching profile from public.users...');
 
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select(`
-      *,
-      subscriptions (
+  let profile = null;
+  let profileError = null;
+  
+  try {
+    console.log('🔍 getCurrentUser: Calling profile query...');
+    const profileResult = await supabase
+      .from('users')
+      .select(`
         *,
-        plan:plans (*)
-      )
-    `)
-    .eq('id', user.id)
-    .maybeSingle();
+        subscriptions (
+          *,
+          plan:plans (*)
+        )
+      `)
+      .eq('id', user.id)
+      .maybeSingle();
+    console.log('🔍 getCurrentUser: Profile query completed');
+    profile = profileResult.data;
+    profileError = profileResult.error;
+  } catch (error) {
+    console.error('❌ getCurrentUser: Exception during profile query:', error);
+    console.error('❌ getCurrentUser: Profile error type:', typeof error);
+    console.error('❌ getCurrentUser: Profile error message:', error?.message);
+    console.error('❌ getCurrentUser: Profile error stack:', error?.stack);
+    profileError = error;
+  }
 
   console.log('🔍 getCurrentUser: Profile query result:', { 
     profileFound: !!profile,
