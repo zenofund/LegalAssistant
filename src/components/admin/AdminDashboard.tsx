@@ -768,6 +768,12 @@ function NotificationsTab() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newNotificationTitle, setNewNotificationTitle] = useState('');
+  const [newNotificationMessage, setNewNotificationMessage] = useState('');
+  const [newNotificationType, setNewNotificationType] = useState('info');
+  const [newNotificationTargetRoles, setNewNotificationTargetRoles] = useState(['user']);
+  const [newNotificationExpiresAt, setNewNotificationExpiresAt] = useState('');
+  const [isCreatingNotification, setIsCreatingNotification] = useState(false);
 
   useEffect(() => {
     loadNotifications();
@@ -789,6 +795,63 @@ function NotificationsTab() {
     }
   };
 
+  const handleCreateNotification = async () => {
+    if (!newNotificationTitle.trim() || !newNotificationMessage.trim()) {
+      alert('Please fill in both title and message fields.');
+      return;
+    }
+
+    setIsCreatingNotification(true);
+
+    try {
+      const notificationData = {
+        title: newNotificationTitle.trim(),
+        message: newNotificationMessage.trim(),
+        type: newNotificationType,
+        target_roles: newNotificationTargetRoles,
+        expires_at: newNotificationExpiresAt ? new Date(newNotificationExpiresAt).toISOString() : null,
+        is_active: true
+      };
+
+      const { error } = await supabase
+        .from('admin_notifications')
+        .insert(notificationData);
+
+      if (error) throw error;
+
+      // Reset form state
+      setNewNotificationTitle('');
+      setNewNotificationMessage('');
+      setNewNotificationType('info');
+      setNewNotificationTargetRoles(['user']);
+      setNewNotificationExpiresAt('');
+      setShowCreateModal(false);
+
+      // Refresh notifications list
+      await loadNotifications();
+
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      alert('Failed to create notification. Please try again.');
+    } finally {
+      setIsCreatingNotification(false);
+    }
+  };
+
+  const handleTargetRolesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    setNewNotificationTargetRoles(selectedOptions);
+  };
+
+  const handleCancelCreate = () => {
+    // Reset form state
+    setNewNotificationTitle('');
+    setNewNotificationMessage('');
+    setNewNotificationType('info');
+    setNewNotificationTargetRoles(['user']);
+    setNewNotificationExpiresAt('');
+    setShowCreateModal(false);
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -868,24 +931,35 @@ function NotificationsTab() {
       {/* Create Notification Modal */}
       <Modal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={handleCancelCreate}
         title="Create System Notification"
         maxWidth="lg"
       >
         <div className="space-y-4">
-          <Input label="Title" placeholder="Enter notification title" />
+          <Input 
+            label="Title" 
+            placeholder="Enter notification title"
+            value={newNotificationTitle}
+            onChange={(e) => setNewNotificationTitle(e.target.value)}
+          />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
             <textarea
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               rows={4}
               placeholder="Enter notification message"
+              value={newNotificationMessage}
+              onChange={(e) => setNewNotificationMessage(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <select 
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={newNotificationType}
+                onChange={(e) => setNewNotificationType(e.target.value)}
+              >
                 <option value="info">Info</option>
                 <option value="warning">Warning</option>
                 <option value="error">Error</option>
@@ -894,19 +968,35 @@ function NotificationsTab() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Target Roles</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" multiple>
+              <select 
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                multiple
+                value={newNotificationTargetRoles}
+                onChange={handleTargetRolesChange}
+              >
                 <option value="user">Users</option>
                 <option value="admin">Admins</option>
                 <option value="super_admin">Super Admins</option>
+                <option value="all">All Users</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple roles</p>
             </div>
           </div>
-          <Input label="Expires At (Optional)" type="datetime-local" />
+          <Input 
+            label="Expires At (Optional)" 
+            type="datetime-local"
+            value={newNotificationExpiresAt}
+            onChange={(e) => setNewNotificationExpiresAt(e.target.value)}
+          />
           <div className="flex justify-end space-x-3">
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
-            </Button>
-            <Button>
+              onClick={handleCancelCreate}
+              disabled={isCreatingNotification}
+            <Button 
+              onClick={handleCreateNotification}
+              loading={isCreatingNotification}
+            >
               Create Notification
             </Button>
           </div>
