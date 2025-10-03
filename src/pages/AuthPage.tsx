@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Scale, BookOpen, Zap } from 'lucide-react';
+import { DynamicLogo } from '../components/ui/DynamicLogo';
 import { LoginForm } from '../components/auth/LoginForm';
 import { SignupForm } from '../components/auth/SignupForm';
 
@@ -8,9 +9,9 @@ export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-dark-900 dark:via-dark-800 dark:to-dark-700 flex transition-colors duration-200">
       {/* Left side - Hero content */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 bg-gradient-to-br from-blue-600 to-emerald-600 p-12 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 bg-gradient-to-br from-blue-600 to-emerald-600 dark:from-blue-800 dark:to-emerald-800 p-12 items-center justify-center relative overflow-hidden transition-colors duration-200">
         <div className="absolute inset-0 bg-black opacity-10"></div>
         <div className="relative z-10 text-center text-white max-w-lg">
           <motion.div
@@ -19,8 +20,8 @@ export function AuthPage() {
             transition={{ duration: 0.8 }}
           >
             <div className="flex items-center justify-center mb-8">
-              <Scale className="h-16 w-16 text-white" />
-              <span className="text-4xl font-bold ml-3">easyAI</span>
+              <DynamicLogo className="h-16 w-16 object-contain" />
+              <span className="text-4xl font-bold ml-3 text-white">easyAI</span>
             </div>
             
             <h1 className="text-4xl lg:text-5xl font-bold mb-6">
@@ -72,7 +73,7 @@ export function AuthPage() {
       </div>
 
       {/* Right side - Auth forms */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-dark-secondary transition-colors duration-200">
         <div className="w-full max-w-md">
           {isLogin ? (
             <LoginForm onSwitchToSignup={() => setIsLogin(false)} />

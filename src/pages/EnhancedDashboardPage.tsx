@@ -7,6 +7,7 @@ import { SettingsModal } from '../components/settings/SettingsModal';
 import { SubscriptionManager } from '../components/subscription/SubscriptionManager';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { Button } from '../components/ui/Button';
+import { DynamicLogo } from '../components/ui/DynamicLogo';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, hasPermission } from '../lib/supabase';
@@ -106,7 +107,7 @@ export function EnhancedDashboardPage() {
   }
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-gray-50 dark:bg-dark-primary transition-colors duration-200">
       {paymentStatus && (
         <div className="fixed top-4 right-4 z-50 max-w-md animate-in slide-in-from-top">
           <div
@@ -179,7 +180,7 @@ export function EnhancedDashboardPage() {
 
       <div className="flex-1 lg:ml-80 flex flex-col">
         {/* Mobile Header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="lg:hidden bg-white dark:bg-dark-secondary border-b border-gray-200 dark:border-dark-primary px-4 py-3 flex items-center justify-between transition-colors duration-200">
           <Button
             variant="ghost"
             size="sm"
@@ -190,10 +191,8 @@ export function EnhancedDashboardPage() {
           </Button>
           
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-emerald-600 rounded flex items-center justify-center">
-              <span className="text-xs font-bold text-white">AI</span>
-            </div>
-            <span className="font-semibold text-gray-900">easyAI</span>
+            <DynamicLogo className="w-6 h-6 rounded object-contain" />
+            <span className="font-semibold text-gray-900 dark:text-dark-primary">easyAI</span>
           </div>
           
           <div className="w-8" /> {/* Spacer for centering */}

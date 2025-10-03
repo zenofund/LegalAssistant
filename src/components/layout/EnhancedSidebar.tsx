@@ -24,6 +24,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { DynamicLogo } from '../ui/DynamicLogo';
 import { useChatStore } from '../../stores/chatStore';
 import { formatDate, formatRelativeTime } from '../../lib/utils';
 
@@ -150,16 +151,14 @@ export function EnhancedSidebar({
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
 
   const sidebarContent = (
-    <div className="h-full flex flex-col bg-white border-r border-gray-200">
+    <div className="h-full flex flex-col bg-white dark:bg-dark-secondary border-r border-gray-200 dark:border-dark-primary transition-colors duration-200">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-dark-primary">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-white" />
-            </div>
+            <DynamicLogo className="w-8 h-8 rounded-lg object-contain" />
             <div>
-              <span className="font-bold text-gray-900">easyAI</span>
+              <span className="font-bold text-gray-900 dark:text-dark-primary">easyAI</span>
               <div className="flex items-center space-x-1">
                 {currentPlan?.tier === 'pro' && (
                   <Zap className="h-3 w-3 text-blue-500" />
@@ -167,7 +166,7 @@ export function EnhancedSidebar({
                 {currentPlan?.tier === 'enterprise' && (
                   <Crown className="h-3 w-3 text-purple-500" />
                 )}
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-dark-muted">
                   {currentPlan?.name || 'Free Plan'}
                 </span>
               </div>

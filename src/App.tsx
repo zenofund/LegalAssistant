@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { AuthProvider } from './components/AuthProvider';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthPage } from './pages/AuthPage';
 import { EnhancedDashboardPage } from './pages/EnhancedDashboardPage';
 
@@ -18,10 +19,10 @@ function AppContent() {
   if (loading) {
     console.log('⏳ AppContent: Showing loading screen');
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 dark:bg-dark-primary flex items-center justify-center transition-colors duration-200">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="text-gray-600">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+          <span className="text-gray-600 dark:text-dark-secondary">Loading...</span>
         </div>
       </div>
     );
@@ -38,9 +39,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
