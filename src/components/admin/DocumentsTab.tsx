@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Card, CardContent } from '../ui/Card';
 import { Modal } from '../ui/Modal';
 import { DocumentEditModal } from './DocumentEditModal';
+import { UploadModal } from '../documents/UploadModal';
 import { formatDate } from '../../lib/utils';
 
 export function DocumentsTab() {
@@ -20,6 +21,7 @@ export function DocumentsTab() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
     loadDocuments();
@@ -95,7 +97,7 @@ export function DocumentsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Documents Management</h2>
-        <Button>
+        <Button onClick={() => setShowUploadModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Document
         </Button>
@@ -440,6 +442,16 @@ export function DocumentsTab() {
           </div>
         )}
       </Modal>
+
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={showUploadModal}
+        onClose={() => {
+          setShowUploadModal(false);
+          // Refresh documents list after upload
+          loadDocuments();
+        }}
+      />
     </div>
   );
 }
