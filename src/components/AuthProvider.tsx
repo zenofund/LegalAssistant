@@ -45,8 +45,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (session?.user) {
           console.log('✅ AuthProvider: User session found, fetching profile...');
+          
+          // Create timeout promise
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000);
+          });
+
           try {
-            const { data: userProfile, error } = await supabase
+            // Race between profile fetch and timeout
+            const profileQuery = supabase
               .from('users')
               .select(`
                 *,
@@ -57,6 +64,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               `)
               .eq('id', session.user.id)
               .maybeSingle();
+
+            const { data: userProfile, error } = await Promise.race([
+              profileQuery,
+              timeoutPromise
+            ]) as any;
 
             if (!mounted) return;
 
@@ -88,10 +100,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
 
-        if (mounted && !initialized) {
-          console.log('✅ AuthProvider: Initial auth check complete');
+        if (mounted) {
+          console.log('✅ AuthProvider: Auth check complete');
           setLoading(false);
-          setInitialized(true);
+          if (!initialized) {
+            setInitialized(true);
+          }
         }
       }
     );
@@ -220,9 +234,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    // Create timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Profile refresh timeout')), 5000);
+    });
+
     try {
       console.log('🔍 AuthProvider: Fetching fresh profile data for user:', user.id);
-      const { data: userProfile, error } = await supabase
+      
+      const profileQuery = supabase
         .from('users')
         .select(`
           *,
@@ -233,6 +253,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         `)
         .eq('id', user.id)
         .maybeSingle();
+
+      const { data: userProfile, error } = await Promise.race([
+        profileQuery,
+        timeoutPromise
+      ]) as any;
 
       if (error) {
         console.error('❌ AuthProvider: Error refreshing profile:', error);

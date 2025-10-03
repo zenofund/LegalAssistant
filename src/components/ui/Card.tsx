@@ -10,21 +10,34 @@ interface CardProps {
 }
 
 export function Card({ children, className, hoverable = false, onClick }: CardProps) {
-  const Component = onClick ? motion.div : 'div';
+  const isInteractive = onClick || hoverable;
+  
+  if (isInteractive) {
+    return (
+      <motion.div
+        className={cn(
+          'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden',
+          hoverable && 'cursor-pointer transition-all duration-200',
+          className
+        )}
+        onClick={onClick}
+        whileHover={hoverable ? { scale: 1.02, shadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' } : undefined}
+        whileTap={hoverable ? { scale: 0.98 } : undefined}
+      >
+        {children}
+      </motion.div>
+    );
+  }
   
   return (
-    <Component
+    <div
       className={cn(
         'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden',
-        hoverable && 'cursor-pointer transition-all duration-200',
         className
       )}
-      onClick={onClick}
-      whileHover={hoverable ? { scale: 1.02, shadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' } : undefined}
-      whileTap={hoverable ? { scale: 0.98 } : undefined}
     >
       {children}
-    </Component>
+    </div>
   );
 }
 
