@@ -65,11 +65,11 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'md' }: Mod
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className={`w-full ${maxWidthClasses[maxWidth]} bg-white rounded-xl shadow-xl`}
+              className={`w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-gray-900 rounded-xl shadow-xl`}
             >
               {title && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
                   <Button
                     variant="ghost"
                     size="sm"

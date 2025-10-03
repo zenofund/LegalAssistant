@@ -16,7 +16,7 @@ export function Card({ children, className, hoverable = false, onClick }: CardPr
     return (
       <motion.div
         className={cn(
-          'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden',
+          'bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden',
           hoverable && 'cursor-pointer transition-all duration-200',
           className
         )}
@@ -28,11 +28,11 @@ export function Card({ children, className, hoverable = false, onClick }: CardPr
       </motion.div>
     );
   }
-  
+
   return (
     <div
       className={cn(
-        'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden',
+        'bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden',
         className
       )}
     >
@@ -43,7 +43,7 @@ export function Card({ children, className, hoverable = false, onClick }: CardPr
 
 export function CardHeader({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-6 py-4 border-b border-gray-200', className)}>
+    <div className={cn('px-6 py-4 border-b border-gray-200 dark:border-gray-700', className)}>
       {children}
     </div>
   );
@@ -59,7 +59,7 @@ export function CardContent({ children, className }: { children: React.ReactNode
 
 export function CardFooter({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-6 py-4 bg-gray-50 border-t border-gray-200', className)}>
+    <div className={cn('px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700', className)}>
       {children}
     </div>
   );

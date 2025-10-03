@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { User, CreditCard, Bell, Shield, HelpCircle } from 'lucide-react';
+import { User, CreditCard, Bell, Shield, HelpCircle, Moon, Sun } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../ui/Toast';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../contexts/ThemeContext';
 import { formatCurrency } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 
@@ -39,7 +40,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     >
       <div className="flex h-96">
         {/* Tabs */}
-        <div className="w-48 border-r border-gray-200 pr-4">
+        <div className="w-48 border-r border-gray-200 dark:border-gray-700 pr-4">
           <nav className="space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -49,8 +50,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg text-sm transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -77,6 +78,7 @@ function ProfileSettings({ profile, updateProfile }: any) {
   const [name, setName] = useState(profile.name);
   const [isLoading, setIsLoading] = useState(false);
   const { showSuccess, showError } = useToast();
+  const { theme, toggleTheme } = useTheme();
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -100,7 +102,7 @@ function ProfileSettings({ profile, updateProfile }: any) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Information</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Profile Information</h3>
         <div className="space-y-4">
           <Input
             label="Full Name"
@@ -114,14 +116,42 @@ function ProfileSettings({ profile, updateProfile }: any) {
             helperText="Contact support to change your email address"
           />
           <div className="flex justify-end">
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               loading={isLoading}
               disabled={name === profile.name}
             >
               Save Changes
             </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Theme Settings */}
+      <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Appearance</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-gray-900 dark:text-gray-100">Theme</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Switch between light and dark mode</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={toggleTheme}
+            className="flex items-center space-x-2"
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="h-4 w-4" />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-4 w-4" />
+                <span>Dark</span>
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
@@ -151,7 +181,7 @@ function SubscriptionSettings({ profile }: any) {
     try {
       // Get current date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Get current chat count for today
       const { data: usageData, error: usageError } = await supabase
         .from('usage_tracking')
@@ -198,7 +228,7 @@ function SubscriptionSettings({ profile }: any) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Subscription Details</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Subscription Details</h3>
         
         <Card>
           <CardHeader>
@@ -271,19 +301,19 @@ function NotificationSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Notification Preferences</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">Email Notifications</p>
-              <p className="text-sm text-gray-600">Receive updates about your account</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Email Notifications</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Receive updates about your account</p>
             </div>
             <input type="checkbox" className="rounded" defaultChecked />
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">Security Alerts</p>
-              <p className="text-sm text-gray-600">Get notified about security events</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Security Alerts</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Get notified about security events</p>
             </div>
             <input type="checkbox" className="rounded" defaultChecked />
           </div>
@@ -297,7 +327,7 @@ function SecuritySettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Security Settings</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Security Settings</h3>
         <div className="space-y-4">
           <Button variant="outline" className="w-full justify-start">
             Change Password
