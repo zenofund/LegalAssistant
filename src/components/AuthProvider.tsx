@@ -44,6 +44,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         clearTimeout(timeoutId);
 
         if (session?.user) {
+          // Skip profile fetch if user and profile are already loaded for this session
+          // unless it's a token refresh which might need updated data
+          if (user && profile && user.id === session.user.id && _event !== 'TOKEN_REFRESHED') {
+            console.log('🔄 AuthProvider: Skipping redundant profile fetch for existing session');
+            if (mounted) {
+              setLoading(false);
+              if (!initialized) {
+                setInitialized(true);
+              }
+            }
+            return;
+          }
+
           console.log('✅ AuthProvider: User session found, fetching profile...');
           
           // Create timeout promise
