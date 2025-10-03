@@ -146,33 +146,110 @@ Please provide a comprehensive answer with relevant citations and references.`;
 
 async function performRAGSearch(query: string) {
   try {
-    // This would typically involve:
-    // 1. Generate embeddings for the query using OpenAI embeddings API
-    // 2. Search the vector database for similar documents
-    // 3. Return the most relevant results
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // For now, return mock results - replace with actual RAG implementation
-    return [
-      {
-        id: "1",
-        title: "Nigerian Constitution 1999 (as amended)",
-        type: "statute",
-        citation: "1999 Constitution",
-        relevance_score: 0.95,
-        excerpt: "The Constitution of the Federal Republic of Nigeria 1999 is the supreme law of Nigeria..."
+    if (!openaiApiKey || !supabaseUrl || !supabaseServiceKey) {
+      console.warn("Missing configuration for RAG search");
+      return [];
+    }
+
+    // 1. Generate embeddings for the query
+    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${openaiApiKey}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        model: "text-embedding-3-small",
+        input: query,
+      }),
+    });
+
+    if (!embeddingResponse.ok) {
+      throw new Error(`Embeddings API error: ${embeddingResponse.status}`);
+    }
+
+    const embeddingData = await embeddingResponse.json();
+    const queryEmbedding = embeddingData.data[0].embedding;
+
+    // 2. Search for similar documents using the embedding
+    // Note: This uses a simple approach. For production, consider using pgvector extension
+    const documentsResponse = await fetch(
+      `${supabaseUrl}/rest/v1/documents?select=*&is_public=eq.true&limit=100`,
       {
-        id: "2", 
-        title: "Companies and Allied Matters Act 2020",
-        type: "statute",
-        citation: "CAMA 2020",
-        relevance_score: 0.88,
-        excerpt: "The Companies and Allied Matters Act 2020 governs company incorporation and operations..."
+        headers: {
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+          "apikey": supabaseServiceKey,
+        },
       }
-    ];
+    );
+
+    if (!documentsResponse.ok) {
+      console.error("Failed to fetch documents:", await documentsResponse.text());
+      return [];
+    }
+
+    const documents = await documentsResponse.json();
+    
+    if (!documents || documents.length === 0) {
+      console.warn("No public documents found in database");
+      return [];
+    }
+
+    // 3. Calculate cosine similarity and rank results
+    const scoredDocs = documents
+      .map((doc: any) => {
+        if (!doc.embeddings || doc.embeddings.length === 0) {
+          return null;
+        }
+
+        const similarity = cosineSimilarity(queryEmbedding, doc.embeddings);
+        
+        return {
+          id: doc.id,
+          title: doc.title,
+          type: doc.type,
+          citation: doc.citation,
+          relevance_score: similarity,
+          excerpt: doc.content ? doc.content.substring(0, 300) + '...' : ''
+        };
+      })
+      .filter((doc: any) => doc !== null && doc.relevance_score > 0.7) // Only return relevant results
+      .sort((a: any, b: any) => b.relevance_score - a.relevance_score)
+      .slice(0, 5); // Top 5 results
+
+    return scoredDocs;
 
   } catch (error) {
     console.error("RAG search error:", error);
     return [];
   }
+}
+
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  if (vecA.length !== vecB.length) {
+    return 0;
+  }
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+
+  normA = Math.sqrt(normA);
+  normB = Math.sqrt(normB);
+
+  if (normA === 0 || normB === 0) {
+    return 0;
+  }
+
+  return dotProduct / (normA * normB);
 }

@@ -1,3 +1,8 @@
+// @deno-types="npm:@types/pdf-parse@1.1.1"
+import pdfParse from "npm:pdf-parse@1.1.5";
+// @deno-types="npm:@types/mammoth@1.0.5"
+import mammoth from "npm:mammoth@1.6.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -77,6 +82,7 @@ Deno.serve(async (req: Request) => {
         "Authorization": `Bearer ${supabaseServiceKey}`,
         "Content-Type": "application/json",
         "apikey": supabaseServiceKey,
+        "Prefer": "return=representation"
       },
       body: JSON.stringify({
         title: fileName,
@@ -90,15 +96,18 @@ Deno.serve(async (req: Request) => {
           chunks_count: chunks.length,
           processed_at: new Date().toISOString()
         },
+        is_public: true, // Make documents searchable
         uploaded_by: userId
       })
     });
 
     if (!documentResponse.ok) {
-      throw new Error("Failed to store document");
+      const errorText = await documentResponse.text();
+      throw new Error(`Failed to store document: ${errorText}`);
     }
 
-    const document = await documentResponse.json();
+    const documentData = await documentResponse.json();
+    const document = Array.isArray(documentData) ? documentData[0] : documentData;
 
     return new Response(
       JSON.stringify({
@@ -136,15 +145,43 @@ Deno.serve(async (req: Request) => {
 });
 
 async function extractPDFContent(file: File): Promise<string> {
-  // Placeholder for PDF extraction
-  // In a real implementation, you would use a PDF parsing library
-  return "PDF content extraction not implemented yet. This is placeholder text.";
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+    
+    const data = await pdfParse(buffer);
+    
+    if (!data.text || data.text.trim().length === 0) {
+      throw new Error("No text content found in PDF");
+    }
+    
+    return data.text;
+  } catch (error) {
+    console.error("PDF extraction error:", error);
+    throw new Error(`Failed to extract PDF content: ${error.message}`);
+  }
 }
 
 async function extractDOCXContent(file: File): Promise<string> {
-  // Placeholder for DOCX extraction
-  // In a real implementation, you would use a DOCX parsing library
-  return "DOCX content extraction not implemented yet. This is placeholder text.";
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+    
+    const result = await mammoth.extractRawText({ buffer });
+    
+    if (!result.value || result.value.trim().length === 0) {
+      throw new Error("No text content found in DOCX");
+    }
+    
+    if (result.messages && result.messages.length > 0) {
+      console.warn("DOCX extraction warnings:", result.messages);
+    }
+    
+    return result.value;
+  } catch (error) {
+    console.error("DOCX extraction error:", error);
+    throw new Error(`Failed to extract DOCX content: ${error.message}`);
+  }
 }
 
 function chunkText(text: string, chunkSize: number, overlap: number): string[] {

@@ -1,0 +1,22 @@
+Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s whileTap whiletap 
+    at div
+    at Card (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/components/ui/Card.tsx:19:24)
+    at div
+    at div
+    at SubscriptionSettings (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/components/settings/SettingsModal.tsx:228:33)
+    at div
+    at div
+    at div
+    at div
+    at MotionDOMComponent (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/node_modules/.vite/deps/framer-motion.js?v=8220c523:5396:40)
+    at div
+    at MotionDOMComponent (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/node_modules/.vite/deps/framer-motion.js?v=8220c523:5396:40)
+    at PresenceChild (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/node_modules/.vite/deps/framer-motion.js?v=8220c523:4372:24)
+    at AnimatePresence (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/node_modules/.vite/deps/framer-motion.js?v=8220c523:4451:26)
+    at Modal (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/components/ui/Modal.tsx:30:25)
+    at SettingsModal (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/components/settings/SettingsModal.tsx:27:33)
+    at div
+    at EnhancedDashboardPage (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/pages/EnhancedDashboardPage.tsx:32:41)
+    at AppContent (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/App.tsx:24:38)
+    at AuthProvider (https://a0925f5d-b0e1-4291-9d7f-cdd6506a71cb-00-11gk0bglxlim3.janeway.replit.dev/src/components/AuthProvider.tsx:21:32)
+    at App

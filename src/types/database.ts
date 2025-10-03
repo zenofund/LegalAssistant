@@ -376,8 +376,8 @@ export interface Plan {
   collaboration: boolean;
 }
 
-export interface UserProfile extends Database['public']['Tables']['users']['Row'] {
+export type UserProfile = Database['public']['Tables']['users']['Row'] & {
   subscription?: Database['public']['Tables']['subscriptions']['Row'] & {
     plan: Plan;
   };
-}
+};

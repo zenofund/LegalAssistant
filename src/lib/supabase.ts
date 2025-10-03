@@ -27,13 +27,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
 });
 
 console.log('✅ Supabase client created successfully');
-console.log('🔗 Client URL:', supabase.supabaseUrl);
-console.log('🔑 Client Key (first 20 chars):', supabase.supabaseKey.substring(0, 20) + '...');
 
 // Helper function to get current user with profile
 export async function getCurrentUser() {
   console.log('🔍 getCurrentUser: Starting user fetch...');
-  console.log('🔗 Using Supabase URL:', supabase.supabaseUrl);
   
   let user = null;
   let authError = null;
@@ -44,7 +41,7 @@ export async function getCurrentUser() {
     console.log('🔍 getCurrentUser: supabase.auth.getUser() completed');
     user = authResult.data.user;
     authError = authResult.error;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ getCurrentUser: Exception during supabase.auth.getUser():', error);
     console.error('❌ getCurrentUser: Error type:', typeof error);
     console.error('❌ getCurrentUser: Error message:', error?.message);
@@ -85,7 +82,7 @@ export async function getCurrentUser() {
     console.log('🔍 getCurrentUser: Profile query completed');
     profile = profileResult.data;
     profileError = profileResult.error;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ getCurrentUser: Exception during profile query:', error);
     console.error('❌ getCurrentUser: Profile error type:', typeof error);
     console.error('❌ getCurrentUser: Profile error message:', error?.message);
@@ -95,10 +92,7 @@ export async function getCurrentUser() {
 
   console.log('🔍 getCurrentUser: Profile query result:', { 
     profileFound: !!profile,
-    profileId: profile?.id,
-    profileName: profile?.name,
-    profileError: profileError?.message,
-    subscriptionFound: !!profile?.subscriptions?.length
+    profileError: profileError?.message
   });
 
   if (profileError) {
@@ -130,23 +124,25 @@ export function hasPermission(userRole: string, requiredRole: string | string[])
 
 // Helper function to track feature usage
 export async function trackUsage(feature: string, metadata: Record<string, any> = {}) {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) return;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return;
 
-  const { error } = await supabase
-    .from('usage_tracking')
-    .upsert({
-      user_id: user.id,
-      feature,
-      date: new Date().toISOString().split('T')[0],
-      count: 1,
-      metadata
-    }, {
-      onConflict: 'user_id,feature,date'
-    });
+    const { error } = await supabase
+      .from('usage_tracking')
+      .insert({
+        user_id: user.id,
+        feature,
+        date: new Date().toISOString().split('T')[0],
+        count: 1,
+        metadata
+      });
 
-  if (error) {
+    if (error) {
+      console.error('Error tracking usage:', error);
+    }
+  } catch (error) {
     console.error('Error tracking usage:', error);
   }
 }

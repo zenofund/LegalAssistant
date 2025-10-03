@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { AuthProvider } from './components/AuthProvider';
 import { ThemeProvider } from './contexts/ThemeContext';
