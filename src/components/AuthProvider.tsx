@@ -1,7 +1,8 @@
 import React, { useState, useEffect, createContext } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase'; // Assuming getCurrentUser is no longer needed here
+import { supabase } from '../lib/supabase';
 import type { UserProfile } from '../types/database';
+import { getCachedProfile, setCachedProfile, clearCachedProfile } from '../lib/profileCache';
 
 // Define the AuthContextType interface
 export interface AuthContextType {
@@ -28,15 +29,118 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
+  const fetchProfileWithRetry = async (
+    userId: string,
+    attempt: number = 0,
+    useCache: boolean = true,
+    mountedRef?: { current: boolean }
+  ): Promise<UserProfile | null> => {
+    if (useCache && attempt === 0) {
+      const cached = getCachedProfile(userId);
+      if (cached) {
+        console.log('💾 AuthProvider: Using cached profile');
+
+        (async () => {
+          try {
+            const fresh = await fetchProfileWithRetry(userId, 0, false, mountedRef);
+            if (fresh && (!mountedRef || mountedRef.current)) {
+              setCachedProfile(userId, fresh);
+              setProfile(fresh);
+              console.log('🔄 AuthProvider: Background profile refresh complete');
+            }
+          } catch (error) {
+            console.warn('⚠️ AuthProvider: Background refresh failed, using cached data');
+          }
+        })();
+
+        return cached;
+      }
+    }
+
+    const maxAttempts = 3;
+    const timeout = 10000;
+
+    try {
+      console.log(`🔍 AuthProvider: Fetching profile (attempt ${attempt + 1}/${maxAttempts})...`);
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Profile fetch timeout')), timeout);
+      });
+
+      const profileQuery = supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const { data: userProfile, error } = await Promise.race([
+        profileQuery,
+        timeoutPromise
+      ]) as any;
+
+      if (error) {
+        console.error('❌ AuthProvider: Error fetching profile:', error);
+        throw error;
+      }
+
+      if (!userProfile) {
+        console.warn('⚠️ AuthProvider: No profile found for user:', userId);
+        return null;
+      }
+
+      console.log('✅ AuthProvider: Base profile loaded:', userProfile.name);
+
+      try {
+        const subQuery = supabase
+          .from('subscriptions')
+          .select(`
+            *,
+            plan:plans (*)
+          `)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const subTimeout = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Subscription fetch timeout')), 5000);
+        });
+
+        const { data: subscription } = await Promise.race([subQuery, subTimeout]) as any;
+
+        if (subscription) {
+          console.log('✅ AuthProvider: Subscription data loaded');
+          const fullProfile = { ...userProfile, subscription };
+          setCachedProfile(userId, fullProfile);
+          return fullProfile;
+        }
+      } catch (subError) {
+        console.warn('⚠️ AuthProvider: Could not load subscription, continuing with basic profile');
+      }
+
+      setCachedProfile(userId, userProfile);
+      return userProfile;
+    } catch (error) {
+      console.error(`💥 AuthProvider: Profile fetch attempt ${attempt + 1} failed:`, error);
+
+      if (attempt < maxAttempts - 1) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.log(`⏳ AuthProvider: Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchProfileWithRetry(userId, attempt + 1, false, mountedRef);
+      }
+
+      throw error;
+    }
+  };
+
   useEffect(() => {
     console.log('🚀 AuthProvider: Setting up auth listener');
 
-    let mounted = true;
+    const mountedRef = { current: true };
     let timeoutId: NodeJS.Timeout;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
 
         console.log('🔄 AuthProvider: Auth state change:', _event);
         console.log('🎫 AuthProvider: Session:', session ? 'exists' : 'null');
@@ -45,62 +149,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (session?.user) {
           console.log('✅ AuthProvider: User session found, fetching profile...');
-          
-          // Create timeout promise
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000);
-          });
+          setUser(session.user);
 
           try {
-            // Race between profile fetch and timeout
-            const profileQuery = supabase
-              .from('users')
-              .select(`
-                *,
-                subscriptions (
-                  *,
-                  plan:plans (*)
-                )
-              `)
-              .eq('id', session.user.id)
-              .maybeSingle();
-
-            const { data: userProfile, error } = await Promise.race([
-              profileQuery,
-              timeoutPromise
-            ]) as any;
-
-            if (!mounted) return;
-
-            if (error) {
-              console.error('❌ AuthProvider: Error fetching profile:', error);
-              setUser(session.user);
-              setProfile(null);
-            } else if (userProfile) {
-              console.log('✅ AuthProvider: Profile loaded:', userProfile.name);
-              setUser(session.user);
+            const userProfile = await fetchProfileWithRetry(session.user.id, 0, true, mountedRef);
+            if (mountedRef.current) {
               setProfile(userProfile);
-            } else {
-              console.warn('⚠️ AuthProvider: No profile found for user:', session.user.id);
-              setUser(session.user);
-              setProfile(null);
             }
           } catch (profileError) {
-            console.error('💥 AuthProvider: Exception during profile fetch:', profileError);
-            if (mounted) {
-              setUser(session.user);
+            console.error('💥 AuthProvider: All profile fetch attempts failed:', profileError);
+            if (mountedRef.current) {
               setProfile(null);
             }
           }
         } else {
           console.log('❌ AuthProvider: No user session');
-          if (mounted) {
+          if (mountedRef.current) {
             setUser(null);
             setProfile(null);
           }
         }
 
-        if (mounted) {
+        if (mountedRef.current) {
           console.log('✅ AuthProvider: Auth check complete');
           setLoading(false);
           if (!initialized) {
@@ -111,22 +181,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
 
     timeoutId = setTimeout(() => {
-      if (!initialized && mounted) {
+      if (!initialized && mountedRef.current) {
         console.warn('⏰ AuthProvider: Auth check timeout, clearing loading state');
         setLoading(false);
         setInitialized(true);
       }
-    }, 10000);
+    }, 15000);
 
     console.log('🎧 AuthProvider: Auth listener setup complete');
 
     return () => {
       console.log('🧹 AuthProvider: Cleaning up');
-      mounted = false;
+      mountedRef.current = false;
       clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 AuthProvider: signIn called for email:', email);
@@ -196,6 +266,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     console.log('🚪 AuthProvider: signOut called');
+    if (user) {
+      clearCachedProfile(user.id);
+    }
     await supabase.auth.signOut();
     console.log('🧹 AuthProvider: Clearing user and profile states');
     setUser(null);
@@ -234,42 +307,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    // Create timeout promise
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Profile refresh timeout')), 5000);
-    });
-
     try {
-      console.log('🔍 AuthProvider: Fetching fresh profile data for user:', user.id);
-      
-      const profileQuery = supabase
-        .from('users')
-        .select(`
-          *,
-          subscriptions (
-            *,
-            plan:plans (*)
-          )
-        `)
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const { data: userProfile, error } = await Promise.race([
-        profileQuery,
-        timeoutPromise
-      ]) as any;
-
-      if (error) {
-        console.error('❌ AuthProvider: Error refreshing profile:', error);
-        return;
-      }
-
+      const userProfile = await fetchProfileWithRetry(user.id);
       if (userProfile) {
         console.log('✅ AuthProvider: Profile refreshed successfully');
         setProfile(userProfile);
       }
     } catch (error) {
-      console.error('💥 AuthProvider: Exception during profile refresh:', error);
+      console.error('💥 AuthProvider: Failed to refresh profile:', error);
     }
   };
 
