@@ -9,7 +9,7 @@ export interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: any }>;
+  signIn: (email: string, password:string) => Promise<{ error?: any }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error?: any }>;
@@ -29,54 +29,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const { showSuccess, showError } = useToast();
 
-  // --- [START] MODIFIED SECTION ---
   useEffect(() => {
     console.log('🚀 AuthProvider: Setting up auth listener');
-    setLoading(true); // Start in a loading state
+    setLoading(true);
 
-    // This flag prevents race conditions where multiple auth events
-    // trigger simultaneous profile fetches.
     let isFetching = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 AuthProvider: Auth state change:', event);
 
-        // If a session exists and we are not already fetching...
         if (session?.user && !isFetching) {
-          isFetching = true; // Set lock
-          console.log('✅ AuthProvider: Session found, fetching profile...');
+          isFetching = true;
+          console.log('✅ AuthProvider: Session found, attempting DEBUG profile fetch...');
 
+          // --- [START] DEBUGGING CHANGE ---
+          // This query is simplified to isolate the problem.
+          // It only fetches basic fields from the 'users' table.
           const { data: userProfile, error } = await supabase
             .from('users')
-            .select(`
-              *,
-              subscriptions (
-                *,
-                plan:plans (*)
-              )
-            `)
+            .select('id, name, email') // Simplified selection
             .eq('id', session.user.id)
-            .maybeSingle();
+            .single(); // Using .single() for stricter error checking
+          // --- [END] DEBUGGING CHANGE ---
 
           if (error) {
-            console.error('❌ AuthProvider: Error fetching profile:', error.message);
-            // Still set the user from the session, but profile is null
+            // This block is now VERY important. If there's an RLS issue,
+            // .single() should produce an error here.
+            console.error('❌ AuthProvider: DEBUG FETCH FAILED:', error);
             setUser(session.user);
             setProfile(null);
           } else if (userProfile) {
-            console.log('✅ AuthProvider: Profile loaded:', userProfile.name);
+            console.log('✅ AuthProvider: DEBUG FETCH SUCCEEDED. Profile loaded:', userProfile.name);
             setUser(session.user);
-            setProfile(userProfile);
+            setProfile(userProfile as UserProfile); // Cast as UserProfile for now
           } else {
+            // This case is less likely with .single() but good to have.
             console.warn('⚠️ AuthProvider: No profile found for user:', session.user.id);
             setUser(session.user);
             setProfile(null);
           }
 
-          isFetching = false; // Release lock
+          isFetching = false;
         }
-        // If there is no session, the user is signed out.
         else if (!session) {
           console.log('❌ AuthProvider: No user session, clearing state.');
           setUser(null);
@@ -84,7 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         console.log('✅ AuthProvider: Auth check complete');
-        setLoading(false); // Always finish by clearing the loading state
+        setLoading(false);
       }
     );
 
@@ -94,9 +89,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('🧹 AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
-  }, []); // The empty dependency array ensures this runs only once on mount.
-  // --- [END] MODIFIED SECTION ---
+  }, []);
 
+  // ... (The rest of your functions: signIn, signUp, signOut, etc. remain unchanged)
   const signIn = async (email: string, password: string) => {
     console.log('🔐 AuthProvider: signIn called for email:', email);
     const { error } = await supabase.auth.signInWithPassword({
@@ -131,7 +126,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     console.log('✅ AuthProvider: signUp auth successful, creating profile...');
-    // Create user profile
     if (data.user) {
       const userProfileData = {
         id: data.user.id,
@@ -188,7 +182,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .from('users')
       .update(updates)
       .eq('id', user.id)
-      .select() // It's good practice to select the updated data
+      .select()
       .single();
 
     if (error) {
@@ -197,9 +191,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     console.log('✅ AuthProvider: Profile updated successfully');
-    // After a successful update, refresh the profile state with the new data
-    // This avoids another network request.
-    setProfile((prevProfile) => ({ ...prevProfile, ...updates }));
+    setProfile((prevProfile) => ({ ...prevProfile, ...updates } as UserProfile));
 
     return {};
   };
@@ -216,15 +208,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       const { data: userProfile, error } = await supabase
         .from('users')
-        .select(`
-          *,
-          subscriptions (
-            *,
-            plan:plans (*)
-          )
-        `)
+        .select('id, name, email') // Also simplified here for consistency
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('❌ AuthProvider: Error refreshing profile:', error);
@@ -233,7 +219,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (userProfile) {
         console.log('✅ AuthProvider: Profile refreshed successfully');
-        setProfile(userProfile);
+        setProfile(userProfile as UserProfile);
       }
     } catch (error) {
       console.error('💥 AuthProvider: Exception during profile refresh:', error);
