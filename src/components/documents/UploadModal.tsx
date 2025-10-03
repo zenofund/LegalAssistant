@@ -173,7 +173,34 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to process document');
+        let errorMessage = 'Failed to process document';
+        
+        try {
+          const errorData = await response.json();
+          
+          if (errorData.code === 'WORKER_LIMIT') {
+            errorMessage = 'File is too large or complex to process. Try uploading a smaller file or contact support for assistance.';
+          } else if (errorData.details) {
+            errorMessage = errorData.details;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          // If we can't parse the error response, use status-based messages
+          if (response.status === 413) {
+            errorMessage = 'File is too large. Please try a smaller file.';
+          } else if (response.status === 429) {
+            errorMessage = 'Too many requests. Please wait a moment and try again.';
+          } else if (response.status >= 500) {
+            errorMessage = 'Server error occurred. Please try again later or contact support.';
+          } else {
+            errorMessage = `Upload failed with status ${response.status}. Please try again.`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       setFiles(prev => prev.map(f => 
