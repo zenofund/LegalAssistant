@@ -162,7 +162,6 @@ export function EnhancedSidebar({
           <div className="flex items-center space-x-3">
             <DynamicLogo className="w-[120px] h-auto rounded-lg object-contain" />
             <div>
-              <span className="font-bold text-gray-900 dark:text-dark-primary">easyAI</span>
               <div className="flex items-center space-x-1">
                 {currentPlan?.tier === 'pro' && (
                   <Zap className="h-3 w-3 text-blue-500" />

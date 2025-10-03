@@ -74,7 +74,6 @@ export function Sidebar({ isOpen, onToggle, onShowUpload, onShowSettings }: Side
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
-            <span className="font-semibold text-gray-900">easyAI</span>
           </div>
           <Button
             variant="ghost"

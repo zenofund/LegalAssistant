@@ -57,6 +57,9 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
 
     try {
       // Initialize Paystack payment
+      // Convert amount from Naira to Kobo (Paystack expects amounts in kobo: 1 Naira = 100 Kobo)
+      const amountInKobo = plan.price * 100;
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack-payment`, {
         method: 'POST',
         headers: {
@@ -66,7 +69,7 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
         body: JSON.stringify({
           user_id: profile.id,
           plan_id: plan.id,
-          amount: plan.price,
+          amount: amountInKobo,
           email: profile.email,
           callback_url: `${window.location.origin}/dashboard?payment=success`
         })

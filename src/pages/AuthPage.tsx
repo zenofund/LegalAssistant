@@ -21,9 +21,8 @@ export function AuthPage() {
           >
             <div className="flex items-center justify-center mb-8">
               <DynamicLogo className="h-16 w-16 object-contain" />
-              <span className="text-4xl font-bold ml-3 text-white">easyAI</span>
             </div>
-            
+
             <h1 className="text-4xl lg:text-5xl font-bold mb-6">
               AI-Powered Legal Research for Nigerian Professionals
             </h1>

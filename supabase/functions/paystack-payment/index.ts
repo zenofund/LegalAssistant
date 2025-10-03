@@ -9,7 +9,7 @@ const corsHeaders = {
 interface PaymentRequest {
   user_id: string;
   plan_id: string;
-  amount: number;
+  amount: number; // Amount in kobo (Nigerian smallest currency unit)
   email: string;
   callback_url: string;
 }
@@ -67,11 +67,12 @@ Deno.serve(async (req: Request) => {
     const reference = `easyai_${user_id.slice(0, 8)}_${Date.now()}`;
 
     // Create transaction record
+    // Store amount in Naira (convert from kobo: divide by 100)
     const { data: transaction, error: transactionError } = await supabase
       .from('transactions')
       .insert({
         user_id,
-        amount: amount / 100, // Convert from kobo to naira
+        amount: amount / 100, // Convert from kobo to naira for storage
         currency: 'NGN',
         paystack_tx_ref: reference,
         status: 'pending',
@@ -89,6 +90,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Initialize Paystack payment
+    // Paystack API expects amount in kobo (already received in kobo from frontend)
     const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -97,7 +99,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         email,
-        amount: amount, // Amount in kobo
+        amount: amount, // Amount in kobo (e.g., 15000 Naira = 1500000 kobo)
         reference,
         callback_url,
         metadata: {
