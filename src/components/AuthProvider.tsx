@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase'; // Assuming getCurrentUser is no longer needed here
+import { supabase } from '../lib/supabase';
 import { useToast } from './ui/Toast';
 import type { UserProfile } from '../types/database';
 
@@ -27,121 +27,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
   const { showSuccess, showError } = useToast();
 
+  // --- [START] MODIFIED SECTION ---
   useEffect(() => {
     console.log('🚀 AuthProvider: Setting up auth listener');
+    setLoading(true); // Start in a loading state
 
-    let mounted = true;
-    let timeoutId: NodeJS.Timeout;
+    // This flag prevents race conditions where multiple auth events
+    // trigger simultaneous profile fetches.
+    let isFetching = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!mounted) return;
+      async (event, session) => {
+        console.log('🔄 AuthProvider: Auth state change:', event);
 
-        console.log('🔄 AuthProvider: Auth state change:', _event);
-        console.log('🎫 AuthProvider: Session:', session ? 'exists' : 'null');
+        // If a session exists and we are not already fetching...
+        if (session?.user && !isFetching) {
+          isFetching = true; // Set lock
+          console.log('✅ AuthProvider: Session found, fetching profile...');
 
-        clearTimeout(timeoutId);
-
-        if (session?.user) {
-          // Skip profile fetch if user and profile are already loaded for this session
-          // unless it's a token refresh which might need updated data
-          if (user && profile && user.id === session.user.id && _event !== 'TOKEN_REFRESHED') {
-            console.log('🔄 AuthProvider: Skipping redundant profile fetch for existing session');
-            if (mounted) {
-              setLoading(false);
-              if (!initialized) {
-                setInitialized(true);
-              }
-            }
-            return;
-          }
-
-          console.log('✅ AuthProvider: User session found, fetching profile...');
-          
-          // Create timeout promise
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000);
-          });
-
-          try {
-            // Race between profile fetch and timeout
-            const profileQuery = supabase
-              .from('users')
-              .select(`
+          const { data: userProfile, error } = await supabase
+            .from('users')
+            .select(`
+              *,
+              subscriptions (
                 *,
-                subscriptions (
-                  *,
-                  plan:plans (*)
-                )
-              `)
-              .eq('id', session.user.id)
-              .maybeSingle();
+                plan:plans (*)
+              )
+            `)
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-            const { data: userProfile, error } = await Promise.race([
-              profileQuery,
-              timeoutPromise
-            ]) as any;
-
-            if (!mounted) return;
-
-            if (error) {
-              console.error('❌ AuthProvider: Error fetching profile:', error);
-              setUser(session.user);
-              setProfile(null);
-            } else if (userProfile) {
-              console.log('✅ AuthProvider: Profile loaded:', userProfile.name);
-              setUser(session.user);
-              setProfile(userProfile);
-            } else {
-              console.warn('⚠️ AuthProvider: No profile found for user:', session.user.id);
-              setUser(session.user);
-              setProfile(null);
-            }
-          } catch (profileError) {
-            console.error('💥 AuthProvider: Exception during profile fetch:', profileError);
-            if (mounted) {
-              setUser(session.user);
-              setProfile(null);
-            }
-          }
-        } else {
-          console.log('❌ AuthProvider: No user session');
-          if (mounted) {
-            setUser(null);
+          if (error) {
+            console.error('❌ AuthProvider: Error fetching profile:', error.message);
+            // Still set the user from the session, but profile is null
+            setUser(session.user);
+            setProfile(null);
+          } else if (userProfile) {
+            console.log('✅ AuthProvider: Profile loaded:', userProfile.name);
+            setUser(session.user);
+            setProfile(userProfile);
+          } else {
+            console.warn('⚠️ AuthProvider: No profile found for user:', session.user.id);
+            setUser(session.user);
             setProfile(null);
           }
+
+          isFetching = false; // Release lock
+        }
+        // If there is no session, the user is signed out.
+        else if (!session) {
+          console.log('❌ AuthProvider: No user session, clearing state.');
+          setUser(null);
+          setProfile(null);
         }
 
-        if (mounted) {
-          console.log('✅ AuthProvider: Auth check complete');
-          setLoading(false);
-          if (!initialized) {
-            setInitialized(true);
-          }
-        }
+        console.log('✅ AuthProvider: Auth check complete');
+        setLoading(false); // Always finish by clearing the loading state
       }
     );
-
-    timeoutId = setTimeout(() => {
-      if (!initialized && mounted) {
-        console.warn('⏰ AuthProvider: Auth check timeout, clearing loading state');
-        setLoading(false);
-        setInitialized(true);
-      }
-    }, 10000);
 
     console.log('🎧 AuthProvider: Auth listener setup complete');
 
     return () => {
-      console.log('🧹 AuthProvider: Cleaning up');
-      mounted = false;
-      clearTimeout(timeoutId);
+      console.log('🧹 AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // The empty dependency array ensures this runs only once on mount.
+  // --- [END] MODIFIED SECTION ---
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 AuthProvider: signIn called for email:', email);
@@ -257,15 +211,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    // Create timeout promise
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Profile refresh timeout')), 5000);
-    });
-
     try {
       console.log('🔍 AuthProvider: Fetching fresh profile data for user:', user.id);
       
-      const profileQuery = supabase
+      const { data: userProfile, error } = await supabase
         .from('users')
         .select(`
           *,
@@ -276,11 +225,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         `)
         .eq('id', user.id)
         .maybeSingle();
-
-      const { data: userProfile, error } = await Promise.race([
-        profileQuery,
-        timeoutPromise
-      ]) as any;
 
       if (error) {
         console.error('❌ AuthProvider: Error refreshing profile:', error);
