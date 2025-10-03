@@ -1,6 +1,7 @@
 import { useAuth } from './hooks/useAuth';
 import { AuthProvider } from './components/AuthProvider';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './components/ui/Toast';
 import { AuthPage } from './pages/AuthPage';
 import { EnhancedDashboardPage } from './pages/EnhancedDashboardPage';
 
@@ -39,9 +40,11 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

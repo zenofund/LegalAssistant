@@ -18,6 +18,7 @@ import {
   Share2
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
 import { formatDate } from '../../lib/utils';
@@ -30,6 +31,7 @@ export function EnhancedChatInterface() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
   const { currentSession, messages, sendMessage, createNewSession } = useChatStore();
+  const { showError, showWarning } = useToast();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -60,11 +62,27 @@ export function EnhancedChatInterface() {
     } catch (error) {
       console.error('Error sending message:', error);
       
-      // Show user-friendly error message for usage limits
-      if (error instanceof Error && error.message.includes('Daily chat limit reached')) {
-        alert(error.message);
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        
+        if (errorMessage.includes('CHAT_LIMIT_REACHED:')) {
+          const cleanMessage = errorMessage.replace('CHAT_LIMIT_REACHED:', '');
+          showWarning('Daily Chat Limit Reached', cleanMessage);
+        } else if (errorMessage.includes('AI_RATE_LIMIT:')) {
+          const cleanMessage = errorMessage.replace('AI_RATE_LIMIT:', '');
+          showWarning('Rate Limit Exceeded', cleanMessage);
+        } else if (errorMessage.includes('AI_SERVER_ERROR:')) {
+          const cleanMessage = errorMessage.replace('AI_SERVER_ERROR:', '');
+          showError('AI Service Unavailable', cleanMessage);
+        } else if (errorMessage.includes('User not authenticated')) {
+          showError('Authentication Required', 'Please sign in to continue chatting.');
+        } else if (errorMessage.includes('Failed to load user profile')) {
+          showError('Profile Error', 'Unable to load your profile. Please refresh the page and try again.');
       } else {
-        alert('Failed to send message. Please try again.');
+          showError('Message Failed', 'Failed to send message. Please check your connection and try again.');
+        }
+      } else {
+        showError('Unexpected Error', 'An unexpected error occurred. Please try again.');
       }
     } finally {
       setIsLoading(false);

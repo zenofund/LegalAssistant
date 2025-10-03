@@ -112,7 +112,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       const currentUsage = usageData?.count || 0;
       
       if (currentUsage >= currentPlan.max_chats_per_day) {
-        throw new Error(`Daily chat limit reached (${currentPlan.max_chats_per_day} messages). Upgrade your plan for more messages.`);
+        throw new Error(`CHAT_LIMIT_REACHED:Daily chat limit reached (${currentPlan.max_chats_per_day} messages). Upgrade your plan for more messages.`);
       }
     }
 
@@ -159,7 +159,25 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        let errorMessage = 'Failed to get AI response';
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.details) {
+            errorMessage = errorData.details;
+          }
+        } catch (parseError) {
+          // Use status-based error messages
+          if (response.status === 429) {
+            errorMessage = 'AI_RATE_LIMIT:Too many requests. Please wait a moment before sending another message.';
+          } else if (response.status >= 500) {
+            errorMessage = 'AI_SERVER_ERROR:AI service is temporarily unavailable. Please try again in a few moments.';
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const aiResponse = await response.json();

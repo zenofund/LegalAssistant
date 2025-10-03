@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
 
@@ -25,6 +26,7 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const [maxDocumentLimit, setMaxDocumentLimit] = useState(10);
   const [loadingUsage, setLoadingUsage] = useState(false);
   const { profile } = useAuth();
+  const { showSuccess, showError, showWarning } = useToast();
 
   useEffect(() => {
     if (isOpen && profile) {
@@ -77,15 +79,19 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
     const validFiles = newFiles.filter(file => {
       if (!allowedTypes.includes(file.type)) {
-        alert(`File type not supported: ${file.name}`);
+        showError('File Type Not Supported', `${file.name} is not a supported file type. Please upload PDF, DOCX, or TXT files.`);
         return false;
       }
       if (file.size > maxSize) {
-        alert(`File too large: ${file.name} (max 10MB)`);
+        showError('File Too Large', `${file.name} exceeds the 10MB size limit. Please choose a smaller file.`);
         return false;
       }
       return true;
     });
+
+    if (validFiles.length > 0) {
+      showInfo('Files Added', `${validFiles.length} file${validFiles.length > 1 ? 's' : ''} ready for upload.`);
+    }
 
     const fileUploads: FileUpload[] = validFiles.map(file => ({
       file,

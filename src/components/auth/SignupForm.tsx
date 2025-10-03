@@ -4,6 +4,7 @@ import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../ui/Toast';
 import { validateEmail, validatePassword } from '../../lib/utils';
 
 interface SignupFormProps {
@@ -21,6 +22,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
   
   const { signUp } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -56,10 +58,30 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({});
+    
     const { error } = await signUp(email, password, name.trim());
     
     if (error) {
-      setErrors({ general: error.message });
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.message.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      } else if (error.message.includes('Password should be at least')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message.includes('Signup is disabled')) {
+        errorMessage = 'Account registration is currently disabled. Please contact support.';
+      }
+      
+      setErrors({ general: errorMessage });
+      showError('Registration Failed', errorMessage);
+    } else {
+      showSuccess(
+        'Account Created Successfully!', 
+        'Welcome to easyAI! You can now start using the platform.'
+      );
     }
     
     setLoading(false);

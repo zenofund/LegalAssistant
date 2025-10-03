@@ -3,6 +3,7 @@ import { User, CreditCard, Bell, Shield, HelpCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../ui/Toast';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { formatCurrency } from '../../lib/utils';
@@ -75,6 +76,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 function ProfileSettings({ profile, updateProfile }: any) {
   const [name, setName] = useState(profile.name);
   const [isLoading, setIsLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -82,12 +84,14 @@ function ProfileSettings({ profile, updateProfile }: any) {
       const result = await updateProfile({ name });
       if (result.error) {
         console.error('Profile update error:', result.error);
-        // You could add a toast notification here
+        showError('Update Failed', 'Failed to update your profile. Please try again.');
       } else {
         console.log('Profile updated successfully');
+        showSuccess('Profile Updated', 'Your profile has been updated successfully.');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
+      showError('Update Failed', 'An unexpected error occurred while updating your profile.');
     } finally {
       setIsLoading(false);
     }

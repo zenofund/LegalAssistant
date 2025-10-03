@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../ui/Toast';
 import { validateEmail } from '../../lib/utils';
 
 interface LoginFormProps {
@@ -18,6 +19,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   const [loading, setLoading] = useState(false);
   
   const { signIn } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -42,10 +44,25 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({});
+    
     const { error } = await signIn(email, password);
     
     if (error) {
-      setErrors({ general: error.message });
+      let errorMessage = 'Failed to sign in. Please try again.';
+      
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message.includes('Too many requests')) {
+        errorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
+      }
+      
+      setErrors({ general: errorMessage });
+      showError('Sign In Failed', errorMessage);
+    } else {
+      showSuccess('Welcome back!', 'You have been signed in successfully.');
     }
     
     setLoading(false);

@@ -4,6 +4,7 @@ import { Check, Crown, Zap, Users, CreditCard, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui/Toast';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Modal } from '../ui/Modal';
 import { formatCurrency } from '../../lib/utils';
@@ -20,6 +21,7 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const { showSuccess, showError, showInfo } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -51,6 +53,7 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
 
     setUpgrading(true);
     setSelectedPlan(plan);
+    showInfo('Processing Payment', 'Redirecting you to secure payment page...');
 
     try {
       // Initialize Paystack payment
@@ -82,7 +85,7 @@ export function SubscriptionManager({ isOpen, onClose }: SubscriptionManagerProp
 
     } catch (error) {
       console.error('Error upgrading subscription:', error);
-      alert('Failed to process payment. Please try again.');
+      showError('Payment Failed', 'Failed to process payment. Please try again or contact support if the issue persists.');
     } finally {
       setUpgrading(false);
       setSelectedPlan(null);

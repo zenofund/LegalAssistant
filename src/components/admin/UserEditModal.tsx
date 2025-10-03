@@ -3,6 +3,7 @@ import { User, Mail, Shield, Save } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { formatDate } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,6 +26,7 @@ export function UserEditModal({
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('user');
   const [saving, setSaving] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     if (user && isOpen) {
@@ -59,10 +61,11 @@ export function UserEditModal({
         await refreshProfile();
       }
       
+      showSuccess('User Updated', `${name} has been updated successfully.`);
       onClose();
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user. Please try again.');
+      showError('Update Failed', 'Failed to update user. Please try again.');
     } finally {
       setSaving(false);
     }

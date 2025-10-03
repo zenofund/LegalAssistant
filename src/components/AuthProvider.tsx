@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase'; // Assuming getCurrentUser is no longer needed here
+import { useToast } from './ui/Toast';
 import type { UserProfile } from '../types/database';
 
 // Define the AuthContextType interface
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     console.log('🚀 AuthProvider: Setting up auth listener');
@@ -209,7 +211,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     console.log('🚪 AuthProvider: signOut called');
-    await supabase.auth.signOut();
+    
+    try {
+      await supabase.auth.signOut();
+      showSuccess('Signed Out', 'You have been signed out successfully.');
+    } catch (error) {
+      console.error('❌ AuthProvider: signOut error:', error);
+      showError('Sign Out Failed', 'There was an error signing you out. Please try again.');
+    }
+    
     console.log('🧹 AuthProvider: Clearing user and profile states');
     setUser(null);
     setProfile(null);

@@ -3,6 +3,7 @@ import { Users, Search, Download, Eye, CreditCard as Edit, Trash2, AlertTriangle
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../ui/Toast';
 import { Card, CardContent } from '../ui/Card';
 import { Modal } from '../ui/Modal';
 import { UserEditModal } from './UserEditModal';
@@ -19,6 +20,7 @@ export function UsersTab() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     loadUsers();
@@ -66,9 +68,10 @@ export function UsersTab() {
       await loadUsers();
       setShowDeleteConfirm(false);
       setUserToDelete(null);
+      showSuccess('User Deleted', `${userToDelete.name} has been successfully deleted.`);
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user. Please try again.');
+      showError('Delete Failed', 'Failed to delete user. Please try again.');
     } finally {
       setDeleting(false);
     }
