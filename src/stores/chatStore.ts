@@ -104,6 +104,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         .eq('date', today)
         .single();
 
+      // Handle the case where no usage record exists for today (PGRST116 error)
+      if (usageError && usageError.code !== 'PGRST116') {
+        throw usageError;
+      }
+      
       const currentUsage = usageData?.count || 0;
       
       if (currentUsage >= currentPlan.max_chats_per_day) {
