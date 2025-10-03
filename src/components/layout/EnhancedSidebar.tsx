@@ -35,15 +35,19 @@ interface EnhancedSidebarProps {
   onShowSettings: () => void;
   onShowSubscription: () => void;
   onShowAdmin?: () => void;
+  onShowHistory: () => void;
+  onShowArchived: () => void;
 }
 
-export function EnhancedSidebar({ 
-  isOpen, 
-  onToggle, 
-  onShowUpload, 
+export function EnhancedSidebar({
+  isOpen,
+  onToggle,
+  onShowUpload,
   onShowSettings,
   onShowSubscription,
-  onShowAdmin
+  onShowAdmin,
+  onShowHistory,
+  onShowArchived
 }: EnhancedSidebarProps) {
   const { profile, signOut } = useAuth();
   const { createNewSession, loadSession, currentSession } = useChatStore();
@@ -262,6 +266,7 @@ export function EnhancedSidebar({
           </Button>
           <Button
             variant="ghost"
+            onClick={onShowHistory}
             className="w-full justify-start text-sm"
           >
             <History className="h-4 w-4 mr-3" />
@@ -269,6 +274,7 @@ export function EnhancedSidebar({
           </Button>
           <Button
             variant="ghost"
+            onClick={onShowArchived}
             className="w-full justify-start text-sm"
           >
             <Archive className="h-4 w-4 mr-3" />

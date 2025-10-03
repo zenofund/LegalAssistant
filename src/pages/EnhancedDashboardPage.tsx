@@ -6,6 +6,8 @@ import { UploadModal } from '../components/documents/UploadModal';
 import { SettingsModal } from '../components/settings/SettingsModal';
 import { SubscriptionManager } from '../components/subscription/SubscriptionManager';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
+import { ChatHistoryModal } from '../components/chat/ChatHistoryModal';
+import { ArchivedChatsModal } from '../components/chat/ArchivedChatsModal';
 import { Button } from '../components/ui/Button';
 import { DynamicLogo } from '../components/ui/DynamicLogo';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -18,6 +20,8 @@ export function EnhancedDashboardPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'verifying' | 'success' | 'failed' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
   const { profile, refreshProfile } = useAuth();
@@ -175,6 +179,8 @@ export function EnhancedDashboardPage() {
           onShowSettings={() => setShowSettings(true)}
           onShowSubscription={() => setShowSubscription(true)}
           onShowAdmin={() => setShowAdmin(true)}
+          onShowHistory={() => setShowHistory(true)}
+          onShowArchived={() => setShowArchived(true)}
         />
       </ErrorBoundary>
 
@@ -237,6 +243,16 @@ export function EnhancedDashboardPage() {
       <SubscriptionManager
         isOpen={showSubscription}
         onClose={() => setShowSubscription(false)}
+      />
+
+      <ChatHistoryModal
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
+
+      <ArchivedChatsModal
+        isOpen={showArchived}
+        onClose={() => setShowArchived(false)}
       />
     </div>
   );
