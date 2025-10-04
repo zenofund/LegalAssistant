@@ -176,6 +176,41 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Check usage limits for Pro users (20/day)
+    if (!isAdmin && plan?.tier === 'pro') {
+      const maxBriefsPerDay = plan?.max_briefs_per_day || 20;
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data: usageData } = await supabase
+        .from('usage_tracking')
+        .select('count')
+        .eq('user_id', user_id)
+        .eq('feature', 'case_brief_generator')
+        .eq('date', today)
+        .single();
+
+      const currentUsage = usageData?.count || 0;
+
+      if (currentUsage >= maxBriefsPerDay) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "LIMIT_REACHED",
+            message: `Daily Brief Generator limit reached (${maxBriefsPerDay}/day). Your limit will reset tomorrow.`,
+            current_usage: currentUsage,
+            max_limit: maxBriefsPerDay
+          }),
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    }
+
     let caseTextToAnalyze = case_text;
     let documentTitle = 'Legal Brief';
     
@@ -367,13 +402,28 @@ ${additional_instructions ? `Additional instructions: ${additional_instructions}
 
     if (!isAdmin) {
       const today = new Date().toISOString().split('T')[0];
+
+      // Get current usage count
+      const { data: currentUsage } = await supabase
+        .from('usage_tracking')
+        .select('count')
+        .eq('user_id', user_id)
+        .eq('feature', 'case_brief_generator')
+        .eq('date', today)
+        .single();
+
+      // Increment count
       await supabase
         .from('usage_tracking')
         .upsert({
           user_id: user_id,
           feature: 'case_brief_generator',
           date: today,
-          count: 1
+          count: (currentUsage?.count || 0) + 1,
+          metadata: {
+            last_used_at: new Date().toISOString(),
+            tokens_used: tokensUsed
+          }
         }, {
           onConflict: 'user_id,feature,date',
           ignoreDuplicates: false

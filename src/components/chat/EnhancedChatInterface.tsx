@@ -22,7 +22,9 @@ import {
   Quote,
   Gavel,
   Sparkles,
-  Upload
+  Upload,
+  ChevronUp,
+  ArrowUp
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
@@ -33,7 +35,7 @@ import { CaseSummarizerModal } from './CaseSummarizerModal';
 import { CaseBriefGeneratorModal } from './CaseBriefGeneratorModal';
 import { UpgradeModal } from '../subscription/UpgradeModal';
 import { UploadModal } from '../documents/UploadModal';
-import { formatDate } from '../../lib/utils';
+import { formatDate, cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
@@ -47,6 +49,7 @@ export function EnhancedChatInterface() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [usageData, setUsageData] = useState({ current: 0, max: 50 });
   const [limitError, setLimitError] = useState<any>(null);
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
@@ -199,7 +202,7 @@ export function EnhancedChatInterface() {
   if (!profile) return null;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gray-50">
+    <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -227,12 +230,12 @@ export function EnhancedChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white">
+      <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto px-4 py-4">
           {showUsage && (
             <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="text-gray-600">
-                Daily Usage: <span className="font-semibold">Chats: {usageData.current}/{usageData.max}</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                Daily Usage: <span className="font-semibold">Chats: {usageData.current}/{usageData.max === -1 ? '∞' : usageData.max}</span>
               </span>
               {usageData.current >= usageData.max * 0.8 && usageData.current < usageData.max && (
                 <span className="text-amber-600 text-xs">
@@ -242,86 +245,118 @@ export function EnhancedChatInterface() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="relative">
-            <div className="flex items-end space-x-3">
-              <div className="flex-1 relative">
-                <textarea
-                  ref={textareaRef}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  rows={1}
-                  disabled={isLoading}
-                />
-                <div className="absolute right-3 bottom-3 flex items-center space-x-2">
-                  <Button
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
+                className="w-full px-4 py-3 pr-32 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors"
+                rows={1}
+                disabled={isLoading}
+              />
+
+              {/* Inline Actions */}
+              <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+                {/* Tools Menu Button */}
+                <div className="relative">
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowUploadModal(true)}
-                    className="p-1"
-                    title="Upload Documents"
+                    onClick={() => setShowToolsMenu(!showToolsMenu)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    title="AI Tools"
                   >
-                    <Upload className="h-4 w-4" />
-                  </Button>
-                  {hasCitationGenerator && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowCitationGenerator(true)}
-                      className="p-1"
-                      title="Legal Citation Generator"
-                    >
-                      <Quote className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {hasProFeatures && (
-                    <>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowCaseSummarizer(true)}
-                        className="p-1"
-                        title="Case Summarizer"
+                    <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                  </button>
+
+                  {/* Tools Popup Menu */}
+                  <AnimatePresence>
+                    {showToolsMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center space-x-2 whitespace-nowrap"
                       >
-                        <Scale className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowCaseBriefGenerator(true)}
-                        className="p-1"
-                        title="Brief Generator"
-                      >
-                        <Gavel className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                  {messages.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={exportChat}
-                      className="p-1"
-                      title="Export Chat"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  )}
+                        {hasCitationGenerator && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCitationGenerator(true);
+                              setShowToolsMenu(false);
+                            }}
+                            className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Legal Citation"
+                          >
+                            <Quote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs text-gray-700 dark:text-gray-300">Citation</span>
+                          </button>
+                        )}
+                        {hasProFeatures && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowCaseSummarizer(true);
+                                setShowToolsMenu(false);
+                              }}
+                              className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              title="Case Summarizer"
+                            >
+                              <Scale className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                              <span className="text-xs text-gray-700 dark:text-gray-300">Summarizer</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowCaseBriefGenerator(true);
+                                setShowToolsMenu(false);
+                              }}
+                              className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              title="Brief Generator"
+                            >
+                              <Gavel className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                              <span className="text-xs text-gray-700 dark:text-gray-300">Brief</span>
+                            </button>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
+                {/* Download Button */}
+                {messages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={exportChat}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    title="Export Chat"
+                  >
+                    <Download className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                  </button>
+                )}
+
+                {/* Send Button - Circular with themed background */}
+                <button
+                  type="submit"
+                  disabled={!message.trim() || isLoading}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                    !message.trim() || isLoading
+                      ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
+                      : "bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100"
+                  )}
+                  title="Send Message"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 text-white dark:text-gray-900 animate-spin" />
+                  ) : (
+                    <ArrowUp className="h-5 w-5 text-white dark:text-gray-900" />
+                  )}
+                </button>
               </div>
-              <Button
-                type="submit"
-                disabled={!message.trim() || isLoading}
-                className="h-12 w-12 p-0 rounded-xl"
-              >
-                <Send className="h-5 w-5" />
-              </Button>
             </div>
           </form>
         </div>
@@ -404,11 +439,11 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
           <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Scale className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             Welcome to easyAI
           </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Your AI-powered legal research assistant for Nigerian law. 
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+            Your AI-powered legal research assistant for Nigerian law.
             Ask questions, analyze cases, or upload documents for instant insights.
           </p>
         </motion.div>
@@ -423,15 +458,15 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => onSuggestionClick(suggestion.text)}
-                className="text-left p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-white"
+                className="text-left p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800"
               >
                 <div className="flex items-start space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${suggestion.color}`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${suggestion.color} dark:opacity-90`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">{suggestion.title}</h3>
-                    <p className="text-sm text-gray-600">{suggestion.text}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{suggestion.title}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{suggestion.text}</p>
                   </div>
                 </div>
               </motion.button>
@@ -499,15 +534,15 @@ function EnhancedMessageBubble({
       <div
         className={`max-w-4xl w-full rounded-2xl px-6 py-4 ${
           message.role === 'user'
-            ? 'bg-blue-600 text-white ml-12'
-            : 'bg-white border border-gray-200 mr-12 shadow-sm'
+            ? 'bg-blue-600 dark:bg-blue-500 text-white ml-12'
+            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mr-12 shadow-sm dark:shadow-gray-900/50'
         }`}
       >
         {/* Message Content */}
         <div className={`prose prose-sm max-w-none ${
-          message.role === 'user' 
-            ? 'prose-invert' 
-            : 'prose-gray'
+          message.role === 'user'
+            ? 'prose-invert'
+            : 'prose-gray dark:prose-invert'
         }`}>
           {message.role === 'user' ? (
             <div className="whitespace-pre-wrap">{message.message}</div>
@@ -666,10 +701,10 @@ function EnhancedMessageBubble({
         
         {/* Sources */}
         {message.sources && message.sources.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-2 mb-4">
-              <BookOpen className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
+              <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Sources ({message.sources.length})
               </span>
             </div>
@@ -683,9 +718,9 @@ function EnhancedMessageBubble({
 
         {/* Feedback Buttons */}
         {message.role === 'assistant' && (
-          <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-500">Was this helpful?</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Was this helpful?</span>
               <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
                 <ThumbsUp className="h-3 w-3" />
               </Button>
@@ -705,28 +740,28 @@ function EnhancedSourceCard({ source }: { source: DocumentSource }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+      className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
     >
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            source.type === 'case' 
-              ? 'bg-blue-100 text-blue-600'
+            source.type === 'case'
+              ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
               : source.type === 'statute'
-              ? 'bg-emerald-100 text-emerald-600'
-              : 'bg-gray-100 text-gray-600'
+              ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400'
+              : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
           }`}>
             {source.type === 'case' ? <Scale className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
           </div>
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-2">
-            <h4 className="text-sm font-semibold text-gray-900 line-clamp-2">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
               {source.title}
             </h4>
             <div className="flex items-center space-x-2 ml-2">
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+              <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full">
                 {Math.round(source.relevance_score * 100)}% match
               </span>
               <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
@@ -734,15 +769,16 @@ function EnhancedSourceCard({ source }: { source: DocumentSource }) {
               </Button>
             </div>
           </div>
-          
+
           {source.citation && (
             <div className="flex items-center space-x-2 mb-2">
-              <BookOpen className="h-3 w-3 text-gray-400" />
-              <span className="text-xs text-gray-600 font-mono">{source.citation}</span>
+              <BookOpen className="h-3 w-3 text-gray-400 dark:text-gray-500" />
+              <span className="text-xs text-gray-600 dark:text-gray-400 font-mono">{source.citation}</span>
             </div>
           )}
-          
-          <p className="text-sm text-gray-700 line-clamp-3 mb-3">
+
+
+          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-3">
             {source.excerpt}
           </p>
           
