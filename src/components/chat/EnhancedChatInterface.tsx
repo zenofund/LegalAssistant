@@ -19,13 +19,17 @@ import {
   ThumbsUp,
   ThumbsDown,
   Share2,
-  Quote
+  Quote,
+  Gavel,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
 import { CitationGeneratorModal } from './CitationGeneratorModal';
+import { CaseSummarizerModal } from './CaseSummarizerModal';
+import { CaseBriefGeneratorModal } from './CaseBriefGeneratorModal';
 import { UpgradeModal } from '../subscription/UpgradeModal';
 import { formatDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
@@ -35,6 +39,8 @@ export function EnhancedChatInterface() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCitationGenerator, setShowCitationGenerator] = useState(false);
+  const [showCaseSummarizer, setShowCaseSummarizer] = useState(false);
+  const [showCaseBriefGenerator, setShowCaseBriefGenerator] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [usageData, setUsageData] = useState({ current: 0, max: 50 });
   const [limitError, setLimitError] = useState<any>(null);
@@ -183,6 +189,7 @@ export function EnhancedChatInterface() {
 
   const currentPlan = profile?.subscription?.plan;
   const hasCitationGenerator = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
+  const hasProFeatures = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
   const showUsage = !isAdmin && usageData.max !== -1;
 
@@ -257,6 +264,30 @@ export function EnhancedChatInterface() {
                       <Quote className="h-4 w-4" />
                     </Button>
                   )}
+                  {hasProFeatures && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCaseSummarizer(true)}
+                        className="p-1"
+                        title="Case Summarizer"
+                      >
+                        <Scale className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCaseBriefGenerator(true)}
+                        className="p-1"
+                        title="Brief Generator"
+                      >
+                        <Gavel className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                   {messages.length > 0 && (
                     <Button
                       type="button"
@@ -287,6 +318,18 @@ export function EnhancedChatInterface() {
         isOpen={showCitationGenerator}
         onClose={() => setShowCitationGenerator(false)}
         onCitationGenerated={handleCitationGenerated}
+      />
+
+      {/* Case Summarizer Modal */}
+      <CaseSummarizerModal
+        isOpen={showCaseSummarizer}
+        onClose={() => setShowCaseSummarizer(false)}
+      />
+
+      {/* Case Brief Generator Modal */}
+      <CaseBriefGeneratorModal
+        isOpen={showCaseBriefGenerator}
+        onClose={() => setShowCaseBriefGenerator(false)}
       />
 
       {/* Upgrade Modal */}

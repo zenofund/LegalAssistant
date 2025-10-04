@@ -37,6 +37,8 @@ interface EnhancedSidebarProps {
   onShowAdmin?: () => void;
   onShowHistory: () => void;
   onShowArchived: () => void;
+  onShowCaseSummarizer?: () => void;
+  onShowCaseBriefGenerator?: () => void;
 }
 
 export function EnhancedSidebar({
@@ -47,7 +49,9 @@ export function EnhancedSidebar({
   onShowSubscription,
   onShowAdmin,
   onShowHistory,
-  onShowArchived
+  onShowArchived,
+  onShowCaseSummarizer,
+  onShowCaseBriefGenerator
 }: EnhancedSidebarProps) {
   const { profile, signOut } = useAuth();
   const { createNewSession, loadSession, currentSession } = useChatStore();
@@ -164,6 +168,7 @@ export function EnhancedSidebar({
 
   const currentPlan = profile?.subscription?.plan;
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+  const hasProFeatures = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
   const showUsage = !isAdmin && usageData.max !== -1;
   const usagePercentage = usageData.max > 0 ? (usageData.current / usageData.max) * 100 : 0;
   const isNearLimit = usagePercentage >= 80;
@@ -287,6 +292,38 @@ export function EnhancedSidebar({
           )}
         </div>
       </div>
+
+      {/* Pro Tools Section */}
+      {hasProFeatures && (
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="space-y-2">
+            <h3 className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3 flex items-center">
+              <Zap className="h-3 w-3 mr-1" />
+              Pro Tools
+            </h3>
+            {onShowCaseSummarizer && (
+              <Button
+                variant="ghost"
+                onClick={onShowCaseSummarizer}
+                className="w-full justify-start text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <Scale className="h-4 w-4 mr-3" />
+                Case Summarizer
+              </Button>
+            )}
+            {onShowCaseBriefGenerator && (
+              <Button
+                variant="ghost"
+                onClick={onShowCaseBriefGenerator}
+                className="w-full justify-start text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <BookOpen className="h-4 w-4 mr-3" />
+                Brief Generator
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">

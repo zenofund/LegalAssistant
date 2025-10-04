@@ -8,6 +8,8 @@ import { SubscriptionManager } from '../components/subscription/SubscriptionMana
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { ChatHistoryModal } from '../components/chat/ChatHistoryModal';
 import { ArchivedChatsModal } from '../components/chat/ArchivedChatsModal';
+import { CaseSummarizerModal } from '../components/chat/CaseSummarizerModal';
+import { CaseBriefGeneratorModal } from '../components/chat/CaseBriefGeneratorModal';
 import { Button } from '../components/ui/Button';
 import { DynamicLogo } from '../components/ui/DynamicLogo';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -22,6 +24,8 @@ export function EnhancedDashboardPage() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showCaseSummarizer, setShowCaseSummarizer] = useState(false);
+  const [showCaseBriefGenerator, setShowCaseBriefGenerator] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'verifying' | 'success' | 'failed' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
   const { profile, refreshProfile } = useAuth();
@@ -181,6 +185,8 @@ export function EnhancedDashboardPage() {
           onShowAdmin={() => setShowAdmin(true)}
           onShowHistory={() => setShowHistory(true)}
           onShowArchived={() => setShowArchived(true)}
+          onShowCaseSummarizer={() => setShowCaseSummarizer(true)}
+          onShowCaseBriefGenerator={() => setShowCaseBriefGenerator(true)}
         />
       </ErrorBoundary>
 
@@ -253,6 +259,16 @@ export function EnhancedDashboardPage() {
       <ArchivedChatsModal
         isOpen={showArchived}
         onClose={() => setShowArchived(false)}
+      />
+
+      <CaseSummarizerModal
+        isOpen={showCaseSummarizer}
+        onClose={() => setShowCaseSummarizer(false)}
+      />
+
+      <CaseBriefGeneratorModal
+        isOpen={showCaseBriefGenerator}
+        onClose={() => setShowCaseBriefGenerator(false)}
       />
     </div>
   );
