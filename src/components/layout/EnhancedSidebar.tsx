@@ -19,7 +19,8 @@ import {
   MoreHorizontal,
   Crown,
   Zap,
-  Scale
+  Scale,
+  Infinity
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
@@ -170,6 +171,7 @@ export function EnhancedSidebar({
   const currentPlan = profile?.subscription?.plan;
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
   const hasProFeatures = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
+  const isEnterprise = currentPlan?.tier === 'enterprise';
   const showUsage = !isAdmin && usageData.max !== -1;
   const usagePercentage = usageData.max > 0 ? (usageData.current / usageData.max) * 100 : 0;
   const isNearLimit = usagePercentage >= 80;
@@ -204,13 +206,21 @@ export function EnhancedSidebar({
             <X className="h-5 w-5" />
           </Button>
         </div>
-        {showUsage && (
+        {!isAdmin && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-600 dark:text-gray-400">
-                Chats: {usageData.current}/{usageData.max}
+              <span className="text-gray-600 dark:text-gray-400 flex items-center space-x-1">
+                <span>Chats: {usageData.current}/</span>
+                {isEnterprise ? (
+                  <span className="flex items-center space-x-1">
+                    <span>Unlimited</span>
+                    <Infinity className="h-3 w-3" />
+                  </span>
+                ) : (
+                  <span>{usageData.max}</span>
+                )}
               </span>
-              {isNearLimit && (
+              {!isEnterprise && isNearLimit && showUsage && (
                 <button
                   onClick={onShowSubscription}
                   className="text-blue-600 hover:text-blue-700 font-medium"
@@ -219,14 +229,16 @@ export function EnhancedSidebar({
                 </button>
               )}
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-              <div
-                className={`h-1.5 rounded-full transition-all ${
-                  isNearLimit ? 'bg-amber-500' : 'bg-blue-500'
-                }`}
-                style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-              />
-            </div>
+            {showUsage && (
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div
+                  className={`h-1.5 rounded-full transition-all ${
+                    isNearLimit ? 'bg-amber-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -334,14 +346,6 @@ export function EnhancedSidebar({
           </h3>
           <Button
             variant="ghost"
-            onClick={onShowUpload}
-            className="w-full justify-start text-sm"
-          >
-            <Upload className="h-4 w-4 mr-3" />
-            Upload Documents
-          </Button>
-          <Button
-            variant="ghost"
             onClick={onShowHistory}
             className="w-full justify-start text-sm"
           >
@@ -361,65 +365,74 @@ export function EnhancedSidebar({
 
       {/* User Menu */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-        <div className="space-y-3">
-          {/* User Info */}
-          <div className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {profile?.name}
-              </p>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {currentPlan?.name || 'Free Plan'}
-                </span>
-                {currentPlan?.tier !== 'enterprise' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onShowSubscription}
-                    className="text-xs px-2 py-1 h-5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800"
-                  >
-                    Upgrade
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Menu Items */}
-          <div className="space-y-1">
-            <Button
-              variant="ghost"
+        <div className="flex items-center justify-between space-x-2">
+          {/* User Info Button */}
+          <Tooltip content={profile?.name || 'User Profile'}>
+            <button
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all"
+              aria-label="User Profile"
+            >
+              <User className="h-5 w-5 text-white" />
+            </button>
+          </Tooltip>
+
+          {/* Plan Info Button */}
+          <Tooltip content={currentPlan?.name || 'Free Plan'}>
+            <button
+              onClick={currentPlan?.tier !== 'enterprise' ? onShowSubscription : undefined}
+              className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
+                currentPlan?.tier === 'enterprise'
+                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                  : currentPlan?.tier === 'pro'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 cursor-pointer'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer'
+              }`}
+              aria-label="Plan Information"
+            >
+              {currentPlan?.tier === 'enterprise' ? (
+                <Crown className="h-5 w-5" />
+              ) : currentPlan?.tier === 'pro' ? (
+                <Zap className="h-5 w-5" />
+              ) : (
+                <Crown className="h-5 w-5" />
+              )}
+            </button>
+          </Tooltip>
+
+          {/* Settings Button */}
+          <Tooltip content="Settings">
+            <button
               onClick={onShowSettings}
-              className="w-full justify-start text-sm"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+              aria-label="Settings"
             >
-              <Settings className="h-4 w-4 mr-3" />
-              Settings
-            </Button>
-            
-            {isAdmin && (
-              <Button
-                variant="ghost"
+              <Settings className="h-5 w-5" />
+            </button>
+          </Tooltip>
+
+          {/* Admin Button (if admin) */}
+          {isAdmin && (
+            <Tooltip content="Admin Dashboard">
+              <button
                 onClick={onShowAdmin}
-                className="w-full justify-start text-sm"
+                className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all"
+                aria-label="Admin Dashboard"
               >
-                <Crown className="h-4 w-4 mr-3" />
-                Admin Dashboard
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
+                <Crown className="h-5 w-5" />
+              </button>
+            </Tooltip>
+          )}
+
+          {/* Logout Button */}
+          <Tooltip content="Sign Out">
+            <button
               onClick={signOut}
-              className="w-full justify-start text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
+              aria-label="Sign Out"
             >
-              <LogOut className="h-4 w-4 mr-3" />
-              Sign Out
-            </Button>
-          </div>
+              <LogOut className="h-5 w-5" />
+            </button>
+          </Tooltip>
         </div>
       </div>
     </div>
@@ -458,12 +471,47 @@ export function EnhancedSidebar({
   );
 }
 
-function ChatSessionItem({ 
-  session, 
-  isSelected, 
-  onClick, 
-  onArchive, 
-  onDelete 
+function Tooltip({
+  content,
+  children
+}: {
+  content: string;
+  children: React.ReactNode
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div
+      className="relative inline-block"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap z-50 pointer-events-none"
+          >
+            {content}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+              <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ChatSessionItem({
+  session,
+  isSelected,
+  onClick,
+  onArchive,
+  onDelete
 }: {
   session: any;
   isSelected: boolean;

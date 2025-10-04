@@ -89,10 +89,6 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
       return true;
     });
 
-    if (validFiles.length > 0) {
-      showInfo('Files Added', `${validFiles.length} file${validFiles.length > 1 ? 's' : ''} ready for upload.`);
-    }
-
     const fileUploads: FileUpload[] = validFiles.map(file => ({
       file,
       status: 'pending',

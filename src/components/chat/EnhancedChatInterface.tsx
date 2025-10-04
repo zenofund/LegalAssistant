@@ -21,7 +21,8 @@ import {
   Share2,
   Quote,
   Gavel,
-  Sparkles
+  Sparkles,
+  Upload
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
@@ -31,6 +32,7 @@ import { CitationGeneratorModal } from './CitationGeneratorModal';
 import { CaseSummarizerModal } from './CaseSummarizerModal';
 import { CaseBriefGeneratorModal } from './CaseBriefGeneratorModal';
 import { UpgradeModal } from '../subscription/UpgradeModal';
+import { UploadModal } from '../documents/UploadModal';
 import { formatDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
@@ -42,6 +44,7 @@ export function EnhancedChatInterface() {
   const [showCaseSummarizer, setShowCaseSummarizer] = useState(false);
   const [showCaseBriefGenerator, setShowCaseBriefGenerator] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [usageData, setUsageData] = useState({ current: 0, max: 50 });
   const [limitError, setLimitError] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -252,6 +255,16 @@ export function EnhancedChatInterface() {
                   disabled={isLoading}
                 />
                 <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowUploadModal(true)}
+                    className="p-1"
+                    title="Upload Documents"
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
                   {hasCitationGenerator && (
                     <Button
                       type="button"
@@ -295,6 +308,7 @@ export function EnhancedChatInterface() {
                       size="sm"
                       onClick={exportChat}
                       className="p-1"
+                      title="Export Chat"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -340,6 +354,12 @@ export function EnhancedChatInterface() {
         currentUsage={limitError?.current_usage || usageData.current}
         maxLimit={limitError?.max_limit || usageData.max}
         planTier={limitError?.plan_tier || currentPlan?.tier || 'free'}
+      />
+
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
       />
     </div>
   );
