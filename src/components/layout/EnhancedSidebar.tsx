@@ -55,7 +55,7 @@ export function EnhancedSidebar({
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [maxDailyChatLimit, setMaxDailyChatLimit] = useState(50);
+  const [usageData, setUsageData] = useState({ current: 0, max: 50 });
 
   // Sync selectedSession with currentSession from store
   useEffect(() => {
@@ -73,9 +73,19 @@ export function EnhancedSidebar({
     if (!profile) return;
 
     try {
-      // Get max chat limit from current plan
-      const currentPlan = profile.subscription?.plan;
-      setMaxDailyChatLimit(currentPlan?.max_chats_per_day || 50);
+      const { data, error } = await supabase.rpc('check_usage_limit', {
+        p_user_id: profile.id,
+        p_feature: 'chat_message'
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        setUsageData({
+          current: data.current_usage || 0,
+          max: data.max_limit || 50
+        });
+      }
     } catch (error) {
       console.error('Error loading chat usage:', error);
     }
@@ -106,6 +116,7 @@ export function EnhancedSidebar({
       const newSessionId = await createNewSession();
       await trackUsage('chat_session_creation');
       await loadChatSessions();
+      await loadChatUsage();
     } catch (error) {
       console.error('Error creating new chat:', error);
     } finally {
@@ -153,12 +164,15 @@ export function EnhancedSidebar({
 
   const currentPlan = profile?.subscription?.plan;
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+  const showUsage = !isAdmin && usageData.max !== -1;
+  const usagePercentage = usageData.max > 0 ? (usageData.current / usageData.max) * 100 : 0;
+  const isNearLimit = usagePercentage >= 80;
 
   const sidebarContent = (
     <div className="h-full flex flex-col bg-white dark:bg-dark-secondary border-r border-gray-200 dark:border-dark-primary transition-colors duration-200">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-dark-primary">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <DynamicLogo className="w-[120px] h-auto rounded-lg object-contain" />
             <div>
@@ -184,6 +198,31 @@ export function EnhancedSidebar({
             <X className="h-5 w-5" />
           </Button>
         </div>
+        {showUsage && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600 dark:text-gray-400">
+                Chats: {usageData.current}/{usageData.max}
+              </span>
+              {isNearLimit && (
+                <button
+                  onClick={onShowSubscription}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Upgrade
+                </button>
+              )}
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all ${
+                  isNearLimit ? 'bg-amber-500' : 'bg-blue-500'
+                }`}
+                style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* New Chat Button */}

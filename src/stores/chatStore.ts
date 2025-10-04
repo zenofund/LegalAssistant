@@ -160,23 +160,32 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       if (!response.ok) {
         let errorMessage = 'Failed to get AI response';
-        
+
         try {
           const errorData = await response.json();
-          if (errorData.error) {
+
+          if (response.status === 429 && errorData.error === 'CHAT_LIMIT_REACHED') {
+            const limitData = {
+              current_usage: errorData.current_usage,
+              max_limit: errorData.max_limit,
+              remaining: errorData.remaining,
+              plan_tier: errorData.plan_tier,
+              upgrade_needed: errorData.upgrade_needed
+            };
+            errorMessage = `CHAT_LIMIT_REACHED:${JSON.stringify(limitData)}`;
+          } else if (errorData.error) {
             errorMessage = errorData.error;
           } else if (errorData.details) {
             errorMessage = errorData.details;
           }
         } catch (parseError) {
-          // Use status-based error messages
           if (response.status === 429) {
             errorMessage = 'AI_RATE_LIMIT:Too many requests. Please wait a moment before sending another message.';
           } else if (response.status >= 500) {
             errorMessage = 'AI_SERVER_ERROR:AI service is temporarily unavailable. Please try again in a few moments.';
           }
         }
-        
+
         throw new Error(errorMessage);
       }
 

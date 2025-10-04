@@ -45,69 +45,49 @@ Deno.serve(async (req: Request) => {
       throw new Error("Supabase configuration missing");
     }
 
-    // Check user's plan and usage limits
-    const userResponse = await fetch(
-      `${supabaseUrl}/rest/v1/users?id=eq.${user_id}&select=*,subscriptions(*,plans(*))`,
+    // Check usage limits with the new comprehensive function
+    const limitCheckResponse = await fetch(
+      `${supabaseUrl}/rest/v1/rpc/check_usage_limit`,
       {
+        method: "POST",
         headers: {
           "Authorization": `Bearer ${supabaseServiceKey}`,
           "apikey": supabaseServiceKey,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          p_user_id: user_id,
+          p_feature: "chat_message"
+        }),
       }
     );
 
-    if (!userResponse.ok) {
-      throw new Error("Failed to fetch user profile");
+    if (!limitCheckResponse.ok) {
+      throw new Error("Failed to check usage limits");
     }
 
-    const users = await userResponse.json();
-    if (!users || users.length === 0) {
-      throw new Error("User not found");
-    }
+    const limitCheck = await limitCheckResponse.json();
 
-    const user = users[0];
-    const subscription = user.subscriptions?.[0];
-    const plan = subscription?.plans;
-
-    // Check usage limits if plan has restrictions
-    if (plan && plan.max_chats_per_day !== -1) {
-      const usageResponse = await fetch(
-        `${supabaseUrl}/rest/v1/rpc/get_usage_count_today`,
+    // If limit exceeded and user is not admin
+    if (!limitCheck.allowed && !limitCheck.is_admin) {
+      return new Response(
+        JSON.stringify({
+          error: "CHAT_LIMIT_REACHED",
+          message: `You've reached your daily limit of ${limitCheck.max_limit} chats. Upgrade to continue using easyAI today!`,
+          current_usage: limitCheck.current_usage,
+          max_limit: limitCheck.max_limit,
+          remaining: limitCheck.remaining,
+          plan_tier: limitCheck.plan_tier,
+          upgrade_needed: true
+        }),
         {
-          method: "POST",
+          status: 429,
           headers: {
-            "Authorization": `Bearer ${supabaseServiceKey}`,
-            "apikey": supabaseServiceKey,
+            ...corsHeaders,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            p_user_id: user_id,
-            p_feature: "chat_message"
-          }),
         }
       );
-
-      if (usageResponse.ok) {
-        const currentUsage = await usageResponse.json();
-
-        if (currentUsage >= plan.max_chats_per_day) {
-          return new Response(
-            JSON.stringify({
-              error: "CHAT_LIMIT_REACHED",
-              message: `Daily chat limit reached (${plan.max_chats_per_day} messages). Upgrade your plan for more messages.`,
-              current_usage: currentUsage,
-              limit: plan.max_chats_per_day
-            }),
-            {
-              status: 429,
-              headers: {
-                ...corsHeaders,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-        }
-      }
     }
 
     // Initialize OpenAI

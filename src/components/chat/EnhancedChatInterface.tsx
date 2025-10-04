@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, 
-  Loader2, 
-  FileText, 
-  ExternalLink, 
-  Copy, 
-  RefreshCw, 
+import {
+  Send,
+  Loader2,
+  FileText,
+  ExternalLink,
+  Copy,
+  RefreshCw,
   Download,
   BookOpen,
   Scale,
@@ -23,13 +23,18 @@ import { useToast } from '../ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
 import { CitationGeneratorModal } from './CitationGeneratorModal';
+import { UpgradeModal } from '../subscription/UpgradeModal';
 import { formatDate } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
 export function EnhancedChatInterface() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCitationGenerator, setShowCitationGenerator] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [usageData, setUsageData] = useState({ current: 0, max: 50 });
+  const [limitError, setLimitError] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
@@ -41,12 +46,39 @@ export function EnhancedChatInterface() {
   }, [messages]);
 
   useEffect(() => {
-    // Auto-resize textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   }, [message]);
+
+  useEffect(() => {
+    if (profile) {
+      loadUsageData();
+    }
+  }, [profile]);
+
+  const loadUsageData = async () => {
+    if (!profile) return;
+
+    try {
+      const { data, error } = await supabase.rpc('check_usage_limit', {
+        p_user_id: profile.id,
+        p_feature: 'chat_message'
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        setUsageData({
+          current: data.current_usage || 0,
+          max: data.max_limit || 50
+        });
+      }
+    } catch (error) {
+      console.error('Error loading usage data:', error);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -62,6 +94,7 @@ export function EnhancedChatInterface() {
 
       await sendMessage(sessionId, message.trim());
       setMessage('');
+      await loadUsageData();
     } catch (error) {
       console.error('Error sending message:', error);
       
@@ -70,7 +103,13 @@ export function EnhancedChatInterface() {
         
         if (errorMessage.includes('CHAT_LIMIT_REACHED:')) {
           const cleanMessage = errorMessage.replace('CHAT_LIMIT_REACHED:', '');
-          showWarning('Daily Chat Limit Reached', cleanMessage);
+          try {
+            const errorData = JSON.parse(errorMessage.split('CHAT_LIMIT_REACHED:')[1] || '{}');
+            setLimitError(errorData);
+            setShowUpgradeModal(true);
+          } catch {
+            showWarning('Daily Chat Limit Reached', cleanMessage);
+          }
         } else if (errorMessage.includes('AI_RATE_LIMIT:')) {
           const cleanMessage = errorMessage.replace('AI_RATE_LIMIT:', '');
           showWarning('Rate Limit Exceeded', cleanMessage);
@@ -133,8 +172,15 @@ export function EnhancedChatInterface() {
     setMessage(prev => prev + (prev ? '\n\n' : '') + `Generated Citation: ${citation}`);
   };
 
+  const handleUpgradeClick = () => {
+    setShowUpgradeModal(false);
+    window.location.href = '/dashboard?showSubscription=true';
+  };
+
   const currentPlan = profile?.subscription?.plan;
   const hasCitationGenerator = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+  const showUsage = !isAdmin && usageData.max !== -1;
 
   if (!profile) return null;
 
@@ -168,6 +214,18 @@ export function EnhancedChatInterface() {
       {/* Input Area */}
       <div className="border-t border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-4">
+          {showUsage && (
+            <div className="mb-3 flex items-center justify-between text-sm">
+              <span className="text-gray-600">
+                Daily Usage: <span className="font-semibold">Chats: {usageData.current}/{usageData.max}</span>
+              </span>
+              {usageData.current >= usageData.max * 0.8 && usageData.current < usageData.max && (
+                <span className="text-amber-600 text-xs">
+                  {usageData.max - usageData.current} chats remaining today
+                </span>
+              )}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="relative">
             <div className="flex items-end space-x-3">
               <div className="flex-1 relative">
@@ -224,6 +282,16 @@ export function EnhancedChatInterface() {
         isOpen={showCitationGenerator}
         onClose={() => setShowCitationGenerator(false)}
         onCitationGenerated={handleCitationGenerated}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={handleUpgradeClick}
+        currentUsage={limitError?.current_usage || usageData.current}
+        maxLimit={limitError?.max_limit || usageData.max}
+        planTier={limitError?.plan_tier || currentPlan?.tier || 'free'}
       />
     </div>
   );
@@ -352,7 +420,6 @@ function EnhancedMessageBubble({
           <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center space-x-4">
               <span>Model: {message.model_used || 'GPT-4'}</span>
-              <span>Tokens: {message.tokens_used}</span>
               <span>{formatDate(message.created_at)}</span>
             </div>
             
