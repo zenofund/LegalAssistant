@@ -275,7 +275,33 @@ function SubscriptionSettings({ profile }: any) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Internet search:</span>
-                  <span className="font-medium">{plan?.internet_search ? 'Enabled' : 'Not available'}</span>
+                  <span className="font-medium">
+                    {plan?.internet_search ? (
+                      <span className="text-green-600">✓ Real-time search enabled</span>
+                    ) : (
+                      <span className="text-gray-500">Not available</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Citation Generator:</span>
+                  <span className="font-medium">
+                    {plan?.tier === 'pro' || plan?.tier === 'enterprise' ? (
+                      <span className="text-green-600">✓ NWLR, FWLR formats</span>
+                    ) : (
+                      <span className="text-gray-500">Not available</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Case Summarizer:</span>
+                  <span className="font-medium">
+                    {plan?.tier === 'pro' || plan?.tier === 'enterprise' ? (
+                      <span className="text-green-600">✓ Facts, Issues, Ratio/Obiter</span>
+                    ) : (
+                      <span className="text-gray-500">Not available</span>
+                    )}
+                  </span>
                 </div>
               </div>
             )}

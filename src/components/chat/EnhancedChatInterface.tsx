@@ -215,9 +215,9 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
       color: "bg-emerald-100 text-emerald-600"
     },
     {
-      icon: FileText,
-      title: "Legal Precedents",
-      text: "Explain the doctrine of precedent in Nigerian courts",
+      icon: Scale,
+      title: "Case Analysis",
+      text: "Summarize the facts, issues, and ratio in Carlill v. Carbolic Smoke Ball Co.",
       color: "bg-purple-100 text-purple-600"
     },
     {
