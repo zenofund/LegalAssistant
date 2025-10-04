@@ -121,7 +121,7 @@ Deno.serve(async (req: Request) => {
 
     const userData = await userResponse.json();
     const userPlan = userData?.[0]?.subscription?.plan;
-    const aiModel = userPlan?.ai_model || 'gpt-3.5-turbo';
+    const aiModel = userPlan?.ai_model || 'gpt-4o-mini';
 
     // 4. Detect casual conversation and build appropriate prompt
     const lowerMessage = message.toLowerCase().trim();
