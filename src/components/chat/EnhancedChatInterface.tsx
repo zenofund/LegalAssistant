@@ -15,18 +15,21 @@ import {
   Tag,
   ThumbsUp,
   ThumbsDown,
-  Share2
+  Share2,
+  Quote
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
+import { CitationGeneratorModal } from './CitationGeneratorModal';
 import { formatDate } from '../../lib/utils';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
 export function EnhancedChatInterface() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showCitationGenerator, setShowCitationGenerator] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
@@ -126,6 +129,13 @@ export function EnhancedChatInterface() {
     URL.revokeObjectURL(url);
   };
 
+  const handleCitationGenerated = (citation: string) => {
+    setMessage(prev => prev + (prev ? '\n\n' : '') + `Generated Citation: ${citation}`);
+  };
+
+  const currentPlan = profile?.subscription?.plan;
+  const hasCitationGenerator = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
+
   if (!profile) return null;
 
   return (
@@ -172,6 +182,18 @@ export function EnhancedChatInterface() {
                   disabled={isLoading}
                 />
                 <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+                  {hasCitationGenerator && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCitationGenerator(true)}
+                      className="p-1"
+                      title="Legal Citation Generator"
+                    >
+                      <Quote className="h-4 w-4" />
+                    </Button>
+                  )}
                   {messages.length > 0 && (
                     <Button
                       type="button"
@@ -196,6 +218,13 @@ export function EnhancedChatInterface() {
           </form>
         </div>
       </div>
+
+      {/* Citation Generator Modal */}
+      <CitationGeneratorModal
+        isOpen={showCitationGenerator}
+        onClose={() => setShowCitationGenerator(false)}
+        onCitationGenerated={handleCitationGenerated}
+      />
     </div>
   );
 }
@@ -217,7 +246,7 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
     {
       icon: Scale,
       title: "Case Analysis",
-      text: "Summarize the facts, issues, and ratio in Carlill v. Carbolic Smoke Ball Co.",
+      text: "Generate a citation for Carlill v. Carbolic Smoke Ball Co. (1893) in NWLR format",
       color: "bg-purple-100 text-purple-600"
     },
     {
