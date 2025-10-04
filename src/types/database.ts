@@ -46,6 +46,7 @@ export interface Database {
           internet_search: boolean;
           ai_drafting: boolean;
           collaboration: boolean;
+          ai_model: string;
           is_active: boolean;
           created_at: string;
         };
@@ -62,6 +63,7 @@ export interface Database {
           internet_search?: boolean;
           ai_drafting?: boolean;
           collaboration?: boolean;
+          ai_model?: string;
           is_active?: boolean;
         };
         Update: {
@@ -77,6 +79,7 @@ export interface Database {
           internet_search?: boolean;
           ai_drafting?: boolean;
           collaboration?: boolean;
+          ai_model?: string;
           is_active?: boolean;
         };
       };
@@ -374,6 +377,7 @@ export interface Plan {
   internet_search: boolean;
   ai_drafting: boolean;
   collaboration: boolean;
+  ai_model: string;
 }
 
 export type UserProfile = Database['public']['Tables']['users']['Row'] & {

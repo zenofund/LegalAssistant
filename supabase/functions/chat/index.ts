@@ -104,27 +104,75 @@ Deno.serve(async (req: Request) => {
       `Document: ${doc.title}\nCitation: ${doc.citation || 'N/A'}\nContent: ${doc.excerpt}`
     ).join('\n\n');
 
-    // 3. Build the prompt
-    const systemPrompt = `You are an AI legal assistant specializing in Nigerian law. You help lawyers, legal professionals, and students with legal research and analysis.
+    // 3. Get user's subscription plan to determine AI model
+    const userResponse = await fetch(
+      `${supabaseUrl}/rest/v1/users?select=*,subscription:subscriptions(plan:plans(*))&id=eq.${user_id}`,
+      {
+        headers: {
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+          "apikey": supabaseServiceKey,
+        },
+      }
+    );
+
+    if (!userResponse.ok) {
+      console.error("Failed to fetch user data");
+    }
+
+    const userData = await userResponse.json();
+    const userPlan = userData?.[0]?.subscription?.plan;
+    const aiModel = userPlan?.ai_model || 'gpt-3.5-turbo';
+
+    // 4. Detect casual conversation and build appropriate prompt
+    const lowerMessage = message.toLowerCase().trim();
+    const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening|greetings)/.test(lowerMessage);
+    const isGratitude = /^(thank you|thanks|thank|thx|appreciate|grateful)/.test(lowerMessage);
+    const isGoodbye = /^(bye|goodbye|see you|take care|later)/.test(lowerMessage);
+    const isCasual = isGreeting || isGratitude || isGoodbye;
+
+    let systemPrompt;
+
+    if (isCasual) {
+      systemPrompt = `You are easyAI, a friendly and professional AI legal assistant specializing in Nigerian law. You help lawyers, legal professionals, and students with legal research and analysis.
+
+You are having a natural conversation with a user. Respond warmly and professionally to their message. Keep your response brief and personable, then gently guide them toward how you can help with their legal needs.
+
+IMPORTANT:
+- Be warm, approachable, and conversational
+- Keep responses brief for casual interactions (2-3 sentences)
+- After acknowledging casual messages, mention how you can help with Nigerian law
+- Maintain a professional yet friendly tone
+- Show personality while remaining helpful`;
+    } else {
+      systemPrompt = `You are easyAI, a friendly and professional AI legal assistant specializing in Nigerian law. You help lawyers, legal professionals, and students with legal research and analysis.
 
 IMPORTANT GUIDELINES:
+- Be conversational and approachable while maintaining professionalism
 - Base your responses primarily on the provided legal documents
 - Cite relevant cases, statutes, and legal authorities
 - Always provide legal citations when referencing cases or statutes
 - If a question is outside Nigerian law, clarify but still try to be helpful
-- Be precise and professional in your language
+- Use clear, accessible language - avoid unnecessary legal jargon
 - Always indicate when information comes from the provided documents vs. general legal knowledge
+- When users seem confused, acknowledge their concern warmly before providing information
 
 Context from legal documents:
 ${context}
 
-Please provide helpful, accurate legal information while being clear about limitations and the need for professional legal advice.`;
+Please provide helpful, accurate legal information while being clear about limitations and the need for professional legal advice. Be conversational and human in your responses.`;
+    }
 
-    const userPrompt = `Legal Question: ${message}
+    let userPrompt;
+
+    if (isCasual) {
+      userPrompt = message;
+    } else {
+      userPrompt = `Legal Question: ${message}
 
 Please provide a comprehensive answer with relevant citations and references.`;
+    }
 
-    // 4. Call OpenAI API
+    // 5. Call OpenAI API with plan-specific model
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -132,13 +180,13 @@ Please provide a comprehensive answer with relevant citations and references.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: aiModel,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_tokens: 1500,
-        temperature: 0.7,
+        max_tokens: isCasual ? 150 : 1500,
+        temperature: isCasual ? 0.9 : 0.7,
       }),
     });
 
@@ -149,8 +197,8 @@ Please provide a comprehensive answer with relevant citations and references.`;
     const openaiData = await openaiResponse.json();
     const aiMessage = openaiData.choices[0].message.content;
 
-    // 5. Format sources
-    const sources = ragResults.map(doc => ({
+    // 6. Format sources (skip for casual conversations)
+    const sources = isCasual ? [] : ragResults.map(doc => ({
       id: doc.id,
       title: doc.title,
       type: doc.type,
@@ -159,7 +207,7 @@ Please provide a comprehensive answer with relevant citations and references.`;
       excerpt: doc.excerpt
     }));
 
-    // 6. Track usage after successful message processing
+    // 7. Track usage after successful message processing
     try {
       await fetch(
         `${supabaseUrl}/rest/v1/rpc/increment_usage_count`,
@@ -175,7 +223,7 @@ Please provide a comprehensive answer with relevant citations and references.`;
             p_feature: "chat_message",
             p_metadata: {
               session_id,
-              model: "gpt-4",
+              model: aiModel,
               tokens: openaiData.usage?.total_tokens || 0
             }
           }),
@@ -191,7 +239,7 @@ Please provide a comprehensive answer with relevant citations and references.`;
         message: aiMessage,
         sources,
         metadata: {
-          model_used: "gpt-4",
+          model_used: aiModel,
           tokens_used: openaiData.usage?.total_tokens || 0,
           context_documents: ragResults.length
         }

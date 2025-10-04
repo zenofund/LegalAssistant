@@ -6,6 +6,7 @@ import {
   FileText,
   ExternalLink,
   Copy,
+  Check,
   RefreshCw,
   Download,
   BookOpen,
@@ -138,12 +139,13 @@ export function EnhancedChatInterface() {
     }
   };
 
-  const copyMessage = async (text: string) => {
+  const copyMessage = async (text: string, messageId: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
+      return true;
     } catch (error) {
       console.error('Failed to copy text:', error);
+      return false;
     }
   };
 
@@ -195,11 +197,12 @@ export function EnhancedChatInterface() {
             <div className="space-y-6">
               <AnimatePresence>
                 {messages.map((msg) => (
-                  <EnhancedMessageBubble 
-                    key={msg.id} 
-                    message={msg} 
+                  <EnhancedMessageBubble
+                    key={msg.id}
+                    message={msg}
                     onCopy={copyMessage}
                     onRegenerate={regenerateResponse}
+                    userPlan={profile?.subscription?.plan}
                   />
                 ))}
               </AnimatePresence>
@@ -384,16 +387,39 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
   );
 }
 
-function EnhancedMessageBubble({ 
-  message, 
-  onCopy, 
-  onRegenerate 
-}: { 
+function EnhancedMessageBubble({
+  message,
+  onCopy,
+  onRegenerate,
+  userPlan
+}: {
   message: ChatMessage;
-  onCopy: (text: string) => void;
+  onCopy: (text: string, messageId: string) => Promise<boolean>;
   onRegenerate: (messageId: string) => void;
+  userPlan?: any;
 }) {
   const [showActions, setShowActions] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const success = await onCopy(message.message, message.id);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getModelDisplayName = (modelName: string | null) => {
+    if (!modelName) return 'GPT-3.5';
+
+    const modelMap: Record<string, string> = {
+      'gpt-3.5-turbo': 'GPT-3.5 Turbo',
+      'gpt-4-turbo': 'GPT-4 Turbo',
+      'gpt-4': 'GPT-4',
+    };
+
+    return modelMap[modelName] || modelName.toUpperCase();
+  };
 
   return (
     <motion.div
@@ -419,7 +445,7 @@ function EnhancedMessageBubble({
         {message.role === 'assistant' && (
           <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center space-x-4">
-              <span>Model: {message.model_used || 'GPT-4'}</span>
+              <span>Model: {getModelDisplayName(message.model_used)}</span>
               <span>{formatDate(message.created_at)}</span>
             </div>
             
@@ -435,10 +461,32 @@ function EnhancedMessageBubble({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onCopy(message.message)}
-                    className="p-1 h-6 w-6"
+                    onClick={handleCopy}
+                    className="p-1 h-6 w-6 relative"
                   >
-                    <Copy className="h-3 w-3" />
+                    <AnimatePresence mode="wait">
+                      {copied ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Check className="h-3 w-3 text-green-600" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </Button>
                   <Button
                     variant="ghost"
