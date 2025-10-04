@@ -200,7 +200,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         sources: aiResponse.sources || [],
         metadata: aiResponse.metadata || {},
         tokens_used: aiResponse.tokens_used || 0,
-        model_used: aiResponse.metadata?.model_used || 'gpt-3.5-turbo'
+        model_used: aiResponse.metadata?.model_used || 'gpt-4o-mini'
       };
 
       const { data: aiMsgData, error: aiMsgError } = await supabase
