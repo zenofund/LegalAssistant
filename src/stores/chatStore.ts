@@ -208,10 +208,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         isLoading: false
       }));
 
-      // Track usage and update session
-      await trackUsage('chat_message');
-      
       // Update chat session with new message count and timestamp
+      // Note: Usage tracking is now handled server-side in the edge function
       await supabase
         .from('chat_sessions')
         .update({

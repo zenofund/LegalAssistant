@@ -123,26 +123,57 @@ export function hasPermission(userRole: string, requiredRole: string | string[])
 }
 
 // Helper function to track feature usage
-export async function trackUsage(feature: string, metadata: Record<string, any> = {}) {
+export async function trackUsage(feature: string, metadata: Record<string, any> = {}): Promise<number | null> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return;
 
-    const { error } = await supabase
-      .from('usage_tracking')
-      .insert({
-        user_id: user.id,
-        feature,
-        date: new Date().toISOString().split('T')[0],
-        count: 1,
-        metadata
-      });
+    if (!user) {
+      console.warn('trackUsage: No authenticated user');
+      return null;
+    }
+
+    // Use the database function to properly increment usage count
+    const { data, error } = await supabase.rpc('increment_usage_count', {
+      p_user_id: user.id,
+      p_feature: feature,
+      p_metadata: metadata
+    });
 
     if (error) {
       console.error('Error tracking usage:', error);
+      return null;
     }
+
+    return data as number;
   } catch (error) {
     console.error('Error tracking usage:', error);
+    return null;
+  }
+}
+
+// Helper function to get current usage count for today
+export async function getUsageToday(feature: string): Promise<number> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.warn('getUsageToday: No authenticated user');
+      return 0;
+    }
+
+    const { data, error } = await supabase.rpc('get_usage_count_today', {
+      p_user_id: user.id,
+      p_feature: feature
+    });
+
+    if (error) {
+      console.error('Error getting usage count:', error);
+      return 0;
+    }
+
+    return (data as number) || 0;
+  } catch (error) {
+    console.error('Error getting usage count:', error);
+    return 0;
   }
 }

@@ -1,7 +1,7 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 interface ChatRequest {
@@ -35,6 +35,79 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: corsHeaders,
       });
+    }
+
+    // Get Supabase service client for server-side validation
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    // Check user's plan and usage limits
+    const userResponse = await fetch(
+      `${supabaseUrl}/rest/v1/users?id=eq.${user_id}&select=*,subscriptions(*,plans(*))`,
+      {
+        headers: {
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+          "apikey": supabaseServiceKey,
+        },
+      }
+    );
+
+    if (!userResponse.ok) {
+      throw new Error("Failed to fetch user profile");
+    }
+
+    const users = await userResponse.json();
+    if (!users || users.length === 0) {
+      throw new Error("User not found");
+    }
+
+    const user = users[0];
+    const subscription = user.subscriptions?.[0];
+    const plan = subscription?.plans;
+
+    // Check usage limits if plan has restrictions
+    if (plan && plan.max_chats_per_day !== -1) {
+      const usageResponse = await fetch(
+        `${supabaseUrl}/rest/v1/rpc/get_usage_count_today`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+            "apikey": supabaseServiceKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            p_user_id: user_id,
+            p_feature: "chat_message"
+          }),
+        }
+      );
+
+      if (usageResponse.ok) {
+        const currentUsage = await usageResponse.json();
+
+        if (currentUsage >= plan.max_chats_per_day) {
+          return new Response(
+            JSON.stringify({
+              error: "CHAT_LIMIT_REACHED",
+              message: `Daily chat limit reached (${plan.max_chats_per_day} messages). Upgrade your plan for more messages.`,
+              current_usage: currentUsage,
+              limit: plan.max_chats_per_day
+            }),
+            {
+              status: 429,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+      }
     }
 
     // Initialize OpenAI
@@ -106,6 +179,33 @@ Please provide a comprehensive answer with relevant citations and references.`;
       excerpt: doc.excerpt
     }));
 
+    // 6. Track usage after successful message processing
+    try {
+      await fetch(
+        `${supabaseUrl}/rest/v1/rpc/increment_usage_count`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+            "apikey": supabaseServiceKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            p_user_id: user_id,
+            p_feature: "chat_message",
+            p_metadata: {
+              session_id,
+              model: "gpt-4",
+              tokens: openaiData.usage?.total_tokens || 0
+            }
+          }),
+        }
+      );
+    } catch (trackingError) {
+      // Log but don't fail the request if tracking fails
+      console.error("Failed to track usage:", trackingError);
+    }
+
     return new Response(
       JSON.stringify({
         message: aiMessage,
@@ -176,7 +276,6 @@ async function performRAGSearch(query: string) {
     const queryEmbedding = embeddingData.data[0].embedding;
 
     // 2. Search for similar documents using the embedding
-    // Note: This uses a simple approach. For production, consider using pgvector extension
     const documentsResponse = await fetch(
       `${supabaseUrl}/rest/v1/documents?select=*&is_public=eq.true&limit=100`,
       {
@@ -217,9 +316,9 @@ async function performRAGSearch(query: string) {
           excerpt: doc.content ? doc.content.substring(0, 300) + '...' : ''
         };
       })
-      .filter((doc: any) => doc !== null && doc.relevance_score > 0.7) // Only return relevant results
+      .filter((doc: any) => doc !== null && doc.relevance_score > 0.7)
       .sort((a: any, b: any) => b.relevance_score - a.relevance_score)
-      .slice(0, 5); // Top 5 results
+      .slice(0, 5);
 
     return scoredDocs;
 
