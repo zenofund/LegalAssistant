@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  MessageSquare, 
-  Plus, 
-  History, 
-  BookOpen, 
-  Upload, 
-  Settings, 
-  User, 
+import {
+  MessageSquare,
+  Plus,
+  History,
+  BookOpen,
+  Upload,
+  Settings,
+  User,
   LogOut,
   Menu,
   X,
@@ -18,7 +18,8 @@ import {
   Trash2,
   MoreHorizontal,
   Crown,
-  Zap
+  Zap,
+  Scale
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
