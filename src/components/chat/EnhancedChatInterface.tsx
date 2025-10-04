@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Send,
   Loader2,
@@ -437,8 +439,96 @@ function EnhancedMessageBubble({
         }`}
       >
         {/* Message Content */}
-        <div className="prose prose-sm max-w-none">
-          <div className="whitespace-pre-wrap">{message.message}</div>
+        <div className={`prose prose-sm max-w-none ${
+          message.role === 'user' 
+            ? 'prose-invert' 
+            : 'prose-gray'
+        }`}>
+          {message.role === 'user' ? (
+            <div className="whitespace-pre-wrap">{message.message}</div>
+          ) : (
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // Customize heading styles
+                h1: ({children}) => <h1 className="text-xl font-bold mb-3 text-gray-900">{children}</h1>,
+                h2: ({children}) => <h2 className="text-lg font-semibold mb-2 text-gray-800">{children}</h2>,
+                h3: ({children}) => <h3 className="text-base font-medium mb-2 text-gray-700">{children}</h3>,
+                
+                // Customize paragraph styles
+                p: ({children}) => <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>,
+                
+                // Customize list styles
+                ul: ({children}) => <ul className="mb-3 ml-4 space-y-1">{children}</ul>,
+                ol: ({children}) => <ol className="mb-3 ml-4 space-y-1">{children}</ol>,
+                li: ({children}) => <li className="text-gray-700">{children}</li>,
+                
+                // Customize emphasis styles
+                strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                em: ({children}) => <em className="italic text-gray-800">{children}</em>,
+                
+                // Customize code styles
+                code: ({children, className}) => {
+                  const isInline = !className;
+                  return isInline ? (
+                    <code className="px-1.5 py-0.5 bg-gray-100 text-gray-800 rounded text-sm font-mono">
+                      {children}
+                    </code>
+                  ) : (
+                    <code className={className}>{children}</code>
+                  );
+                },
+                pre: ({children}) => (
+                  <pre className="mb-3 p-3 bg-gray-100 rounded-lg overflow-x-auto">
+                    {children}
+                  </pre>
+                ),
+                
+                // Customize blockquote styles
+                blockquote: ({children}) => (
+                  <blockquote className="mb-3 pl-4 border-l-4 border-blue-500 bg-blue-50 py-2 italic text-gray-700">
+                    {children}
+                  </blockquote>
+                ),
+                
+                // Customize table styles
+                table: ({children}) => (
+                  <div className="mb-3 overflow-x-auto">
+                    <table className="min-w-full border border-gray-200 rounded-lg">
+                      {children}
+                    </table>
+                  </div>
+                ),
+                thead: ({children}) => (
+                  <thead className="bg-gray-50">{children}</thead>
+                ),
+                th: ({children}) => (
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 border-b border-gray-200">
+                    {children}
+                  </th>
+                ),
+                td: ({children}) => (
+                  <td className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
+                    {children}
+                  </td>
+                ),
+                
+                // Customize link styles
+                a: ({children, href}) => (
+                  <a 
+                    href={href} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {message.message}
+            </ReactMarkdown>
+          )}
         </div>
 
         {/* Message Metadata */}
