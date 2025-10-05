@@ -51,10 +51,13 @@ export function EnhancedChatInterface() {
   const [usageData, setUsageData] = useState({ current: 0, max: 50 });
   const [limitError, setLimitError] = useState<any>(null);
   const [showToolsMenu, setShowToolsMenu] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [sharingMessage, setSharingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
-  const { currentSession, messages, sendMessage, createNewSession } = useChatStore();
+  const { currentSession, messages, sendMessage, createNewSession, loadSession } = useChatStore();
   const { showError, showWarning } = useToast();
 
   useEffect(() => {
@@ -88,7 +91,7 @@ export function EnhancedChatInterface() {
       if (data) {
         setUsageData({
           current: data.current_usage || 0,
-          max: data.max_limit || 50
+          max: data.max_limit === -1 ? -1 : (data.max_limit || 50)
         });
       }
     } catch (error) {
@@ -165,8 +168,131 @@ export function EnhancedChatInterface() {
   };
 
   const regenerateResponse = async (messageId: string) => {
-    // Implementation for regenerating AI response
-    console.log('Regenerating response for message:', messageId);
+    if (!profile || !currentSession) return;
+
+    try {
+      const messageIndex = messages.findIndex(msg => msg.id === messageId);
+      if (messageIndex === -1 || messageIndex === 0) return;
+
+      const userMessage = messages[messageIndex - 1];
+      if (userMessage.role !== 'user') return;
+
+      setIsLoading(true);
+
+      await supabase.from('chats').delete().eq('id', messageId);
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: userMessage.message,
+          session_id: currentSession,
+          user_id: profile.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate response');
+      }
+
+      const aiResponse = await response.json();
+
+      const assistantMessage: Omit<ChatMessage, 'id' | 'created_at'> = {
+        user_id: profile.id,
+        session_id: currentSession,
+        message: aiResponse.message,
+        role: 'assistant',
+        sources: aiResponse.sources || [],
+        metadata: aiResponse.metadata || {},
+        tokens_used: aiResponse.tokens_used || 0,
+        model_used: aiResponse.metadata?.model_used || 'gpt-4o-mini'
+      };
+
+      const { data: aiMsgData, error: aiMsgError } = await supabase
+        .from('chats')
+        .insert(assistantMessage)
+        .select()
+        .single();
+
+      if (aiMsgError) throw aiMsgError;
+
+      const updatedMessages = [...messages];
+      updatedMessages[messageIndex] = aiMsgData;
+
+      await loadSession(currentSession);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error regenerating response:', error);
+      showError('Regeneration Failed', 'Failed to regenerate response. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const shareConversation = async (messageId: string) => {
+    if (!profile || !currentSession) return;
+
+    try {
+      setSharingMessage(messageId);
+
+      const shareToken = crypto.randomUUID();
+
+      const { data, error } = await supabase
+        .from('shared_conversations')
+        .insert({
+          session_id: currentSession,
+          user_id: profile.id,
+          share_token: shareToken,
+          is_active: true,
+          expires_at: null
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const shareLink = `${window.location.origin}/shared/${shareToken}`;
+      setShareUrl(shareLink);
+      setShareModalOpen(true);
+    } catch (error) {
+      console.error('Error sharing conversation:', error);
+      showError('Share Failed', 'Failed to create share link. Please try again.');
+    } finally {
+      setSharingMessage(null);
+    }
+  };
+
+  const copyShareUrl = async () => {
+    if (!shareUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showWarning('Link Copied', 'Share link copied to clipboard');
+    } catch (error) {
+      showError('Copy Failed', 'Failed to copy link to clipboard');
+    }
+  };
+
+  const submitFeedback = async (messageId: string, feedbackType: 'positive' | 'negative') => {
+    if (!profile) return;
+
+    try {
+      const { error } = await supabase
+        .from('message_feedback')
+        .upsert({
+          user_id: profile.id,
+          message_id: messageId,
+          feedback_type: feedbackType
+        }, {
+          onConflict: 'user_id,message_id'
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
   };
 
   const exportChat = () => {
@@ -218,6 +344,9 @@ export function EnhancedChatInterface() {
                     message={msg}
                     onCopy={copyMessage}
                     onRegenerate={regenerateResponse}
+                    onShare={shareConversation}
+                    onFeedback={submitFeedback}
+                    sharingMessage={sharingMessage}
                     userPlan={profile?.subscription?.plan}
                   />
                 ))}
@@ -397,6 +526,50 @@ export function EnhancedChatInterface() {
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
       />
+
+      {/* Share Modal */}
+      {shareModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Share Conversation
+              </h3>
+              <button
+                onClick={() => setShareModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Anyone with this link can view this conversation (login required).
+            </p>
+            <div className="flex items-center space-x-2 mb-4">
+              <input
+                type="text"
+                value={shareUrl || ''}
+                readOnly
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
+              />
+              <Button onClick={copyShareUrl} variant="default">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={() => setShareModalOpen(false)}
+              variant="default"
+              className="w-full"
+            >
+              Close
+            </Button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -492,15 +665,22 @@ function EnhancedMessageBubble({
   message,
   onCopy,
   onRegenerate,
+  onShare,
+  onFeedback,
+  sharingMessage,
   userPlan
 }: {
   message: ChatMessage;
   onCopy: (text: string, messageId: string) => Promise<boolean>;
   onRegenerate: (messageId: string) => void;
+  onShare: (messageId: string) => void;
+  onFeedback: (messageId: string, feedbackType: 'positive' | 'negative') => void;
+  sharingMessage: string | null;
   userPlan?: any;
 }) {
   const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
 
   const handleCopy = async () => {
     const success = await onCopy(message.message, message.id);
@@ -508,6 +688,11 @@ function EnhancedMessageBubble({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleFeedback = (type: 'positive' | 'negative') => {
+    setFeedback(type);
+    onFeedback(message.id, type);
   };
 
   const getModelDisplayName = (modelName: string | null) => {
@@ -693,9 +878,15 @@ function EnhancedMessageBubble({
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => onShare(message.id)}
                     className="p-1 h-6 w-6"
+                    disabled={sharingMessage === message.id}
                   >
-                    <Share2 className="h-3 w-3" />
+                    {sharingMessage === message.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Share2 className="h-3 w-3" />
+                    )}
                   </Button>
                 </motion.div>
               )}
@@ -725,10 +916,26 @@ function EnhancedMessageBubble({
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-xs text-gray-500 dark:text-gray-400">Was this helpful?</span>
-              <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleFeedback('positive')}
+                className={cn(
+                  "p-1 h-6 w-6",
+                  feedback === 'positive' && "text-green-600 dark:text-green-400"
+                )}
+              >
                 <ThumbsUp className="h-3 w-3" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleFeedback('negative')}
+                className={cn(
+                  "p-1 h-6 w-6",
+                  feedback === 'negative' && "text-red-600 dark:text-red-400"
+                )}
+              >
                 <ThumbsDown className="h-3 w-3" />
               </Button>
             </div>
