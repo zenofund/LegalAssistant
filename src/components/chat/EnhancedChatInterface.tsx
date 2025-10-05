@@ -369,7 +369,7 @@ export function EnhancedChatInterface() {
       style={{ height: `${viewportHeight}px` }}
     >
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {messages.length === 0 ? (
             <WelcomeScreen onSuggestionClick={setMessage} />
