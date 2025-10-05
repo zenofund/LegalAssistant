@@ -20,15 +20,15 @@ export function AuthPage() {
             transition={{ duration: 0.8 }}
           >
             <div className="flex items-center justify-center mb-8">
-              <DynamicLogo className="h-16 w-16 object-contain" />
+              <DynamicLogo className="w-[150px] h-auto object-contain" />
             </div>
 
-            <h1 className="text-4xl lg:text-5xl font-bold mb-6">
+            <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
               AI-Powered Legal Research for Nigerian Professionals
             </h1>
-            
-            <p className="text-xl text-white/90 mb-8">
-              Streamline your legal research with advanced AI, comprehensive case databases, 
+
+            <p className="text-xl text-white mb-8">
+              Streamline your legal research with advanced AI, comprehensive case databases,
               and intelligent document analysis.
             </p>
 
@@ -40,9 +40,9 @@ export function AuthPage() {
                 className="flex items-center text-lg"
               >
                 <BookOpen className="h-6 w-6 mr-3 text-emerald-200" />
-                <span>Comprehensive legal database</span>
+                <span className="text-white">Comprehensive legal database</span>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -50,9 +50,9 @@ export function AuthPage() {
                 className="flex items-center text-lg"
               >
                 <Zap className="h-6 w-6 mr-3 text-yellow-200" />
-                <span>Instant AI-powered insights</span>
+                <span className="text-white">Instant AI-powered insights</span>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -60,7 +60,7 @@ export function AuthPage() {
                 className="flex items-center text-lg"
               >
                 <Scale className="h-6 w-6 mr-3 text-blue-200" />
-                <span>Nigerian jurisprudence focus</span>
+                <span className="text-white">Nigerian jurisprudence focus</span>
               </motion.div>
             </div>
           </motion.div>
