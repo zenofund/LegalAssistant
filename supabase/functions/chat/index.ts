@@ -128,7 +128,7 @@ Deno.serve(async (req: Request) => {
         console.error('Error checking usage limit:', limitError);
       }
 
-      if (limitCheck && !limitCheck.can_use) {
+      if (limitCheck && !limitCheck.allowed) {
         return new Response(
           JSON.stringify({
             error: "CHAT_LIMIT_REACHED",

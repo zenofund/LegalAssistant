@@ -73,20 +73,20 @@ export function UpgradeModal({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-amber-600" />
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <AlertCircle className="h-5 w-5 text-amber-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
             Daily Chat Limit Reached
           </h2>
-          <p className="text-gray-600 max-w-md mx-auto">
+          <p className="text-sm text-gray-600 max-w-md mx-auto">
             You've used <span className="font-semibold">{currentUsage} of {maxLimit}</span> chats today.
             Upgrade to continue your legal research without interruption.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
           {availablePlans.map((plan) => {
             const Icon = plan.icon;
             const isRecommended = plan.tier === 'pro';
@@ -96,42 +96,42 @@ export function UpgradeModal({
                 key={plan.tier}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`relative rounded-xl border-2 p-6 ${
+                className={`relative rounded-lg border-2 p-4 ${
                   isRecommended
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 bg-white'
                 }`}
               >
                 {isRecommended && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white px-3 py-1 text-xs font-medium rounded-full">
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-blue-500 text-white px-2 py-0.5 text-xs font-medium rounded-full">
                       Recommended
                     </span>
                   </div>
                 )}
 
-                <div className="text-center mb-6">
-                  <div className={`w-12 h-12 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-sm`}>
-                    <Icon className={`h-6 w-6 ${
+                <div className="text-center mb-4">
+                  <div className={`w-10 h-10 mx-auto mb-3 bg-white rounded-full flex items-center justify-center shadow-sm`}>
+                    <Icon className={`h-5 w-5 ${
                       plan.tier === 'pro' ? 'text-blue-600' : 'text-purple-600'
                     }`} />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-gray-900">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{plan.name}</h3>
+                  <div className="mb-3">
+                    <span className="text-2xl font-bold text-gray-900">
                       {formatCurrency(plan.price)}
                     </span>
-                    <span className="text-gray-600">/month</span>
+                    <span className="text-sm text-gray-600">/month</span>
                   </div>
-                  <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                  <div className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                     {plan.chatsPerDay === -1 ? 'Unlimited' : `${plan.chatsPerDay}`} chats/day
                   </div>
                 </div>
 
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-2 mb-4">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start space-x-2 text-sm text-gray-700">
-                      <ArrowRight className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <li key={index} className="flex items-start space-x-2 text-xs text-gray-700">
+                      <ArrowRight className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -149,10 +149,10 @@ export function UpgradeModal({
           })}
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-gray-600">
+        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-gray-600">
               <p className="font-medium mb-1">Your usage resets daily</p>
               <p>
                 Your chat limit will reset at midnight. Upgrade now to continue chatting immediately
