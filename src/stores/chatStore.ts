@@ -94,24 +94,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     // Check chat limits
     const currentPlan = profile.subscriptions?.[0]?.plan;
     if (currentPlan && currentPlan.max_chats_per_day !== -1) {
-      const today = new Date().toISOString().split('T')[0];
-      
-      const { data: usageData, error: usageError } = await supabase
-        .from('usage_tracking')
-        .select('count')
-        .eq('user_id', user.id)
-        .eq('feature', 'chat_message')
-        .eq('date', today)
-        .single();
+      const { data: currentUsage, error: usageError } = await supabase
+        .rpc('get_usage_count_today', {
+          p_user_id: user.id,
+          p_feature: 'chat_message'
+        });
 
-      // Handle the case where no usage record exists for today (PGRST116 error)
-      if (usageError && usageError.code !== 'PGRST116') {
+      if (usageError) {
         throw usageError;
       }
-      
-      const currentUsage = usageData?.count || 0;
-      
-      if (currentUsage >= currentPlan.max_chats_per_day) {
+
+      const usageCount = currentUsage || 0;
+
+      if (usageCount >= currentPlan.max_chats_per_day) {
         throw new Error(`CHAT_LIMIT_REACHED:Daily chat limit reached (${currentPlan.max_chats_per_day} messages). Upgrade your plan for more messages.`);
       }
     }

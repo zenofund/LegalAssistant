@@ -179,24 +179,18 @@ function SubscriptionSettings({ profile }: any) {
 
     setLoadingUsage(true);
     try {
-      // Get current date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
+      // Get current chat count for today using RPC function
+      const { data: currentChatUsage, error: usageError } = await supabase
+        .rpc('get_usage_count_today', {
+          p_user_id: profile.id,
+          p_feature: 'chat_message'
+        });
 
-      // Get current chat count for today
-      const { data: usageData, error: usageError } = await supabase
-        .from('usage_tracking')
-        .select('count')
-        .eq('user_id', profile.id)
-        .eq('feature', 'chat_message')
-        .eq('date', today)
-        .single();
-
-      if (usageError && usageError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (usageError) {
         console.error('Error loading usage data:', usageError);
       }
 
-      const currentChatUsage = usageData?.count || 0;
-      setCurrentChatCount(currentChatUsage);
+      setCurrentChatCount(currentChatUsage || 0);
 
       // Get document count
       const { count: docCount, error: docError } = await supabase
