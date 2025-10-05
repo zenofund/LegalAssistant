@@ -350,22 +350,160 @@ function NotificationSettings() {
 }
 
 function SecuritySettings() {
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showFeatureComingSoon, setShowFeatureComingSoon] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const { showSuccess, showError } = useToast();
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showError('Validation Error', 'Please fill in all password fields.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showError('Validation Error', 'New passwords do not match.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showError('Validation Error', 'New password must be at least 6 characters long.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      showSuccess('Password Changed', 'Your password has been successfully updated.');
+      setShowChangePassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      showError('Update Failed', error.message || 'Failed to change password. Please try again.');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Security Settings</h3>
-        <div className="space-y-4">
-          <Button variant="outline" className="w-full justify-start">
-            Change Password
-          </Button>
-          <Button variant="outline" className="w-full justify-start">
-            Two-Factor Authentication
-          </Button>
-          <Button variant="destructive" className="w-full justify-start">
-            Delete Account
-          </Button>
+    <>
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Security Settings</h3>
+          <div className="space-y-4">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowChangePassword(true)}
+            >
+              Change Password
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowFeatureComingSoon(true)}
+            >
+              Two-Factor Authentication
+            </Button>
+            <Button variant="destructive" className="w-full justify-start">
+              Delete Account
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Change Password Modal */}
+      <Modal
+        isOpen={showChangePassword}
+        onClose={() => {
+          setShowChangePassword(false);
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        }}
+        title="Change Password"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Current Password"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Enter your current password"
+          />
+          <Input
+            label="New Password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Enter your new password"
+            helperText="Must be at least 6 characters long"
+          />
+          <Input
+            label="Confirm New Password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm your new password"
+          />
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowChangePassword(false);
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+              }}
+              disabled={isChangingPassword}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              loading={isChangingPassword}
+            >
+              Change Password
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Feature Coming Soon Modal */}
+      <Modal
+        isOpen={showFeatureComingSoon}
+        onClose={() => setShowFeatureComingSoon(false)}
+        title="Coming Soon"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="text-center py-6">
+            <Shield className="h-16 w-16 mx-auto text-blue-600 dark:text-blue-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              Two-Factor Authentication
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              This feature is coming soon! We're working hard to bring you enhanced security options.
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <Button onClick={() => setShowFeatureComingSoon(false)}>
+              Got it
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }

@@ -103,6 +103,17 @@ export function EnhancedDashboardPage() {
     };
 
     handlePaymentRedirect();
+
+    const handleOpenSettings = () => {
+      setShowAdmin(false);
+      setShowSettings(true);
+    };
+
+    window.addEventListener('openSettings', handleOpenSettings);
+
+    return () => {
+      window.removeEventListener('openSettings', handleOpenSettings);
+    };
   }, []);
 
   if (!profile) return null;

@@ -97,7 +97,7 @@ export function UsersTab() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Users Management</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Users Management</h2>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -118,65 +118,65 @@ export function UsersTab() {
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
             <table className="w-full min-w-[640px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                  <th className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Subscription
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Joined
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="animate-pulse flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                           <div className="space-y-2">
-                            <div className="h-4 bg-gray-200 rounded w-32"></div>
-                            <div className="h-3 bg-gray-200 rounded w-48"></div>
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <Users className="h-5 w-5 text-gray-500" />
+                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                            <Users className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                           </div>
                         </div>
                       </td>
@@ -192,11 +192,11 @@ export function UsersTab() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
                           {user.subscriptions?.[0]?.plan?.name || 'Free Plan'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(user.created_at)}
                       </td>
                       <td className="px-6 py-4">

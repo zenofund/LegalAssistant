@@ -96,7 +96,7 @@ export function DocumentsTab() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Documents Management</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Documents Management</h2>
         <Button onClick={() => setShowUploadModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Document
@@ -134,80 +134,80 @@ export function DocumentsTab() {
       {/* Documents Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
             <table className="w-full min-w-[768px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                  <th className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                     Document
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Jurisdiction
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Uploaded By
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="animate-pulse space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-48"></div>
-                          <div className="h-3 bg-gray-200 rounded w-32"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   filteredDocuments.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-gray-50">
-                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                    <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="flex items-start space-x-3">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                             doc.type === 'case'
-                              ? 'bg-blue-100 text-blue-600'
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
                               : doc.type === 'statute'
-                              ? 'bg-emerald-100 text-emerald-600'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                           }`}>
                             <FileText className="h-4 w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                               {doc.title}
                             </p>
                             {doc.citation && (
-                              <p className="text-sm text-gray-500 truncate">{doc.citation}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{doc.citation}</p>
                             )}
                             {doc.year && (
-                              <p className="text-xs text-gray-400">Year: {doc.year}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">Year: {doc.year}</p>
                             )}
                           </div>
                         </div>
@@ -225,13 +225,13 @@ export function DocumentsTab() {
                           {doc.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 capitalize">
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 capitalize">
                         {doc.jurisdiction}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                         {doc.uploader?.name || 'System'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(doc.created_at)}
                       </td>
                       <td className="px-6 py-4">

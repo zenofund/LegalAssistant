@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download } from 'lucide-react';
+import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download, ChevronDown, UserPlus, Lock, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, hasPermission } from '../../lib/supabase';
 import { formatCurrency, formatDate } from '../../lib/utils'; // Assuming formatDate exists
@@ -24,6 +24,7 @@ interface AdminStats {
 
 export function AdminDashboard() {
   const { profile } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'documents' | 'subscriptions' | 'notifications'>('overview');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,19 +82,66 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Settings className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {profile.name}</span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onBlur={() => setTimeout(() => setShowUserMenu(false), 200)}
+                  className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none"
+                >
+                  <span>Welcome, <span className="font-medium">{profile.role === 'super_admin' ? 'Super Admin' : 'Admin'}</span></span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{profile.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{profile.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setActiveTab('users');
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span>Add User Info</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        window.dispatchEvent(new CustomEvent('openSettings'));
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <Lock className="h-4 w-4" />
+                      <span>Admin Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        window.location.href = '/';
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>Chat Dashboard</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -102,17 +150,32 @@ export function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Tabs */}
         <div className="mb-8">
-          <nav className="flex space-x-8">
+          {/* Mobile/Tablet Dropdown */}
+          <div className="md:hidden">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as any)}
+              className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {tabs.map((tab) => (
+                <option key={tab.id} value={tab.id}>
+                  {tab.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Desktop Tabs */}
+          <nav className="hidden md:flex space-x-8 overflow-x-auto pb-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -139,11 +202,11 @@ export function AdminDashboard() {
 function OverviewTab({ stats, loading }: { stats: AdminStats | null; loading: boolean }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent>
-              <div className="h-20 bg-gray-200 rounded"></div>
+              <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -212,9 +275,9 @@ function OverviewTab({ stats, loading }: { stats: AdminStats | null; loading: bo
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                      <p className="text-sm text-green-600 mt-1">{stat.change} from last month</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-1">{stat.change} from last month</p>
                     </div>
                     <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
                       <Icon className="h-6 w-6 text-white" />
@@ -230,35 +293,35 @@ function OverviewTab({ stats, loading }: { stats: AdminStats | null; loading: bo
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Activity</h3>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <Users className="h-4 w-4 text-blue-600" />
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">New user registered</p>
-                <p className="text-xs text-gray-500">2 minutes ago</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">New user registered</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">2 minutes ago</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                <FileText className="h-4 w-4 text-emerald-600" />
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center">
+                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">Document uploaded</p>
-                <p className="text-xs text-gray-500">5 minutes ago</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Document uploaded</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">5 minutes ago</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                <CreditCard className="h-4 w-4 text-amber-600" />
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
+                <CreditCard className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">Payment received</p>
-                <p className="text-xs text-gray-500">10 minutes ago</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Payment received</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">10 minutes ago</p>
               </div>
             </div>
           </div>
@@ -314,7 +377,7 @@ function SubscriptionsTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Subscriptions Management</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Subscriptions Management</h2>
         <Button>
           <Download className="h-4 w-4 mr-2" />
           Export
@@ -323,68 +386,68 @@ function SubscriptionsTab() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
             <table className="w-full min-w-[640px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                  <th className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Plan
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Start Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="animate-pulse space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-32"></div>
-                          <div className="h-3 bg-gray-200 rounded w-48"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   subscriptions.map((sub) => (
-                    <tr key={sub.id} className="hover:bg-gray-50">
-                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                    <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{sub.user?.name}</p>
-                          <p className="text-sm text-gray-500">{sub.user?.email}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sub.user?.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{sub.user?.email}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-900">{sub.plan?.name}</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">{sub.plan?.name}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -397,10 +460,10 @@ function SubscriptionsTab() {
                           {sub.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                         {formatCurrency(sub.plan?.price || 0)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {sub.start_date ? formatDate(sub.start_date) : 'N/A'}
                       </td>
                       <td className="px-6 py-4">
@@ -532,7 +595,7 @@ function NotificationsTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">System Notifications</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">System Notifications</h2>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Notification
@@ -545,9 +608,9 @@ function NotificationsTab() {
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
                 <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                  <div className="h-3 bg-gray-200 rounded w-full"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
                 </div>
               </CardContent>
             </Card>
@@ -559,7 +622,7 @@ function NotificationsTab() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {notification.title}
                       </h3>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -581,8 +644,8 @@ function NotificationsTab() {
                         {notification.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <p className="text-gray-700 mb-3">{notification.message}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">{notification.message}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                       <span>Target: {notification.target_roles.join(', ')}</span>
                       <span>Created: {formatDate(notification.created_at)}</span>
                       {notification.expires_at && (
