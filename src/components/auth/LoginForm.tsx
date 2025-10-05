@@ -75,8 +75,8 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       className="w-full max-w-md"
     >
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
-        <p className="text-gray-600">Sign in to your easyAI account</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Welcome back</h1>
+        <p className="text-gray-600 dark:text-gray-300">Sign in to your easyAI account</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -112,7 +112,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -128,12 +128,12 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
         </Button>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Don't have an account?{' '}
             <button
               type="button"
               onClick={onSwitchToSignup}
-              className="text-blue-600 hover:text-blue-500 font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
             >
               Sign up
             </button>

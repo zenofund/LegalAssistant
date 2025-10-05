@@ -94,8 +94,8 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       className="w-full max-w-md"
     >
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h1>
-        <p className="text-gray-600">Join easyAI and revolutionize your legal research</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Create your account</h1>
+        <p className="text-gray-600 dark:text-gray-300">Join easyAI and revolutionize your legal research</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -141,7 +141,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -162,7 +162,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -178,12 +178,12 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         </Button>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Already have an account?{' '}
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-blue-600 hover:text-blue-500 font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
             >
               Sign in
             </button>

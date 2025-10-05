@@ -58,13 +58,20 @@ export function EnhancedChatInterface() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharingMessage, setSharingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { profile } = useAuth();
   const { currentSession, messages, sendMessage, createNewSession, loadSession } = useChatStore();
   const { showError, showWarning } = useToast();
 
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
 
   useEffect(() => {
@@ -75,6 +82,9 @@ export function EnhancedChatInterface() {
     const handleVisualViewportResize = () => {
       if (window.visualViewport) {
         setViewportHeight(window.visualViewport.height);
+        setTimeout(() => {
+          scrollToBottom('auto');
+        }, 100);
       }
     };
 
@@ -92,11 +102,11 @@ export function EnhancedChatInterface() {
     };
   }, []);
 
-  useEffect(() => {
-    if (message) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [message]);
+  const handleTextareaFocus = () => {
+    setTimeout(() => {
+      scrollToBottom('auto');
+    }, 300);
+  };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -369,7 +379,7 @@ export function EnhancedChatInterface() {
       style={{ height: `${viewportHeight}px` }}
     >
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {messages.length === 0 ? (
             <WelcomeScreen onSuggestionClick={setMessage} />
@@ -408,14 +418,15 @@ export function EnhancedChatInterface() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onFocus={handleTextareaFocus}
                 placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
-                className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors"
+                className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors touch-action-manipulation"
                 rows={1}
                 disabled={isLoading}
               />
 
               {/* Inline Actions */}
-              <div className="absolute right-2 bottom-2 flex items-center gap-1">
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 {/* Tools Menu Button - Only show for Pro/Enterprise users */}
                 {showAITools && (
                   <div className="relative">
