@@ -514,6 +514,9 @@ function EnhancedMessageBubble({
     if (!modelName) return 'GPT-4o-mini';
 
     const modelMap: Record<string, string> = {
+      'gpt-5': 'GPT-5',
+      'gpt-5-mini': 'GPT-5 Mini',
+      'gpt-5-nano': 'GPT-5 Nano',
       'gpt-4o-mini': 'GPT-4o-mini',
       'gpt-4o': 'GPT-4o',
       'gpt-3.5-turbo': 'GPT-3.5 Turbo',
