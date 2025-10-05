@@ -462,7 +462,7 @@ export function EnhancedChatInterface() {
                   type="submit"
                   disabled={!message.trim() || isLoading}
                   className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all p-2",
                     !message.trim() || isLoading
                       ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
                       : "bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100"
@@ -470,9 +470,9 @@ export function EnhancedChatInterface() {
                   title="Send Message"
                 >
                   {isLoading ? (
-                    <Loader2 className="h-5 w-5 text-white dark:text-gray-900 animate-spin" />
+                    <Loader2 className="h-4 w-4 text-white dark:text-gray-900 animate-spin" />
                   ) : (
-                    <ArrowUp className="h-5 w-5 text-white dark:text-gray-900" />
+                    <ArrowUp className="h-4 w-4 text-white dark:text-gray-900" />
                   )}
                 </button>
               </div>

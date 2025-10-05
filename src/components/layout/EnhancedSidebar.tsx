@@ -20,7 +20,8 @@ import {
   Crown,
   Zap,
   Scale,
-  Infinity
+  Infinity,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
@@ -72,6 +73,27 @@ export function EnhancedSidebar({
     if (profile) {
       loadChatUsage();
       loadChatSessions();
+
+      // Set up real-time subscription for chat sessions
+      const channel = supabase
+        .channel('chat_sessions_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'chat_sessions',
+            filter: `user_id=eq.${profile.id}`
+          },
+          () => {
+            loadChatSessions();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [profile]);
 
@@ -121,13 +143,16 @@ export function EnhancedSidebar({
     try {
       const newSessionId = await createNewSession();
       await trackUsage('chat_session_creation');
-      await loadChatSessions();
-      await loadChatUsage();
+      await Promise.all([loadChatSessions(), loadChatUsage()]);
     } catch (error) {
       console.error('Error creating new chat:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefreshSessions = async () => {
+    await loadChatSessions();
   };
 
   const handleSessionClick = async (sessionId: string) => {
@@ -275,9 +300,20 @@ export function EnhancedSidebar({
             <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Recent Conversations
             </h3>
-            <Button variant="ghost" size="sm" className="p-1">
-              <Filter className="h-3 w-3" />
-            </Button>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-1"
+                onClick={handleRefreshSessions}
+                title="Refresh chat sessions"
+              >
+                <RefreshCw className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="sm" className="p-1">
+                <Filter className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
           
           {filteredSessions.length === 0 ? (

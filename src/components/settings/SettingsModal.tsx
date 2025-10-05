@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, CreditCard, Bell, Shield, HelpCircle, Moon, Sun } from 'lucide-react';
+import { User, CreditCard, Bell, Shield, HelpCircle, Moon, Sun, CheckCircle, XCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -256,44 +256,44 @@ function SubscriptionSettings({ profile }: any) {
             ) : (
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Documents uploaded:</span>
-                  <span className="font-medium">
+                  <span className="text-gray-600 dark:text-gray-400">Documents uploaded:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {maxDocumentLimit === -1 ? 'Unlimited' : `${currentDocumentCount} / ${maxDocumentLimit}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Daily chat messages:</span>
-                  <span className="font-medium">
+                  <span className="text-gray-600 dark:text-gray-400">Daily chat messages:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {maxChatLimit === -1 ? 'Unlimited' : `${currentChatCount} / ${maxChatLimit}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Internet search:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Internet search:</span>
                   <span className="font-medium">
                     {plan?.internet_search ? (
-                      <span className="text-green-600">✓ Real-time search enabled</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                     ) : (
-                      <span className="text-gray-500">Not available</span>
+                      <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-600" />
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Citation Generator:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Citation Generator:</span>
                   <span className="font-medium">
                     {plan?.tier === 'pro' || plan?.tier === 'enterprise' ? (
-                      <span className="text-green-600">✓ NWLR, FWLR formats</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                     ) : (
-                      <span className="text-gray-500">Not available</span>
+                      <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-600" />
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Case Summarizer:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Case Summarizer:</span>
                   <span className="font-medium">
                     {plan?.tier === 'pro' || plan?.tier === 'enterprise' ? (
-                      <span className="text-green-600">✓ Facts, Issues, Ratio/Obiter</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                     ) : (
-                      <span className="text-gray-500">Not available</span>
+                      <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-600" />
                     )}
                   </span>
                 </div>
