@@ -359,10 +359,12 @@ export interface DocumentSource {
   id: string;
   title: string;
   type: string;
-  citation?: string;
+  citation?: string | null;
   page?: number;
+  relevance: number;
   relevance_score: number;
   excerpt: string;
+  metadata?: any;
 }
 
 export interface Plan {

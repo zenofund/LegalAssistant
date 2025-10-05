@@ -12,6 +12,76 @@ interface ChatRequest {
   user_id: string;
 }
 
+interface DocumentChunk {
+  chunk_id: string;
+  document_id: string;
+  document_title: string;
+  document_type: string;
+  document_citation: string | null;
+  chunk_content: string;
+  similarity: number;
+  metadata: any;
+}
+
+// Generate embeddings using OpenAI API
+async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-ada-002',
+      input: text,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('Embedding generation failed:', error);
+    throw new Error('Failed to generate embedding');
+  }
+
+  const data = await response.json();
+  return data.data[0].embedding;
+}
+
+// Build context from retrieved documents
+function buildRAGContext(chunks: DocumentChunk[]): string {
+  if (chunks.length === 0) {
+    return '';
+  }
+
+  let context = '\n\n## Relevant Legal Documents\n\n';
+
+  chunks.forEach((chunk, index) => {
+    context += `### Source ${index + 1}: ${chunk.document_title}\n`;
+    if (chunk.document_citation) {
+      context += `**Citation:** ${chunk.document_citation}\n`;
+    }
+    context += `**Type:** ${chunk.document_type}\n`;
+    context += `**Relevance:** ${(chunk.similarity * 100).toFixed(1)}%\n\n`;
+    context += `${chunk.chunk_content}\n\n`;
+    context += '---\n\n';
+  });
+
+  return context;
+}
+
+// Format sources for response
+function formatSources(chunks: DocumentChunk[]): any[] {
+  return chunks.map(chunk => ({
+    id: chunk.document_id,
+    title: chunk.document_title,
+    type: chunk.document_type,
+    citation: chunk.document_citation,
+    relevance: chunk.similarity,
+    excerpt: chunk.chunk_content.substring(0, 200) + '...',
+    metadata: chunk.metadata,
+  }));
+}
+
 // Map configured model names to actual OpenAI API model names
 // This allows flexibility in database configuration while ensuring API compatibility
 function getOpenAIModel(configuredModel: string): string {
@@ -149,6 +219,33 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Generate embedding for the user's query
+    let queryEmbedding: number[] | null = null;
+    let retrievedChunks: DocumentChunk[] = [];
+
+    try {
+      queryEmbedding = await generateEmbedding(message, openaiApiKey);
+
+      // Perform semantic search on document chunks
+      const { data: chunks, error: searchError } = await supabase
+        .rpc('match_document_chunks', {
+          query_embedding: JSON.stringify(queryEmbedding),
+          match_threshold: 0.85,
+          match_count: 5,
+          filter_user_id: user_id,
+        });
+
+      if (searchError) {
+        console.error('Document search error:', searchError);
+      } else if (chunks && chunks.length > 0) {
+        retrievedChunks = chunks;
+        console.log(`Found ${chunks.length} relevant document chunks`);
+      }
+    } catch (embeddingError) {
+      console.error('RAG retrieval failed:', embeddingError);
+      // Continue without RAG context
+    }
+
     const { data: chatHistory } = await supabase
       .from('chats')
       .select('message, role')
@@ -156,10 +253,16 @@ Deno.serve(async (req: Request) => {
       .order('created_at', { ascending: true })
       .limit(10);
 
+    // Build enhanced context with retrieved documents
+    const ragContext = buildRAGContext(retrievedChunks);
+    const systemPrompt = `You are easyAI, an expert legal research assistant specializing in Nigerian law. Provide accurate, professional, and well-structured legal information. Use markdown formatting for better readability. Always cite relevant laws, cases, and legal principles when applicable.
+
+${ragContext ? '**IMPORTANT:** You have access to relevant legal documents below. Use them to provide accurate, cited answers. Always reference the specific documents when using their information.' + ragContext : ''}`;
+
     const messages = [
       {
         role: "system",
-        content: "You are easyAI, an expert legal research assistant specializing in Nigerian law. Provide accurate, professional, and well-structured legal information. Use markdown formatting for better readability. Always cite relevant laws, cases, and legal principles when applicable."
+        content: systemPrompt
       },
       ...(chatHistory || []).map(msg => ({
         role: msg.role,
@@ -321,14 +424,36 @@ Deno.serve(async (req: Request) => {
         });
     }
 
+    // Format sources from retrieved chunks
+    const sources = formatSources(retrievedChunks);
+
+    // Save assistant message with sources
+    await supabase
+      .from('chats')
+      .insert({
+        user_id: user_id,
+        session_id: session_id,
+        message: aiMessage,
+        role: 'assistant',
+        sources: sources,
+        tokens_used: tokensUsed,
+        model_used: actualModelUsed,
+        metadata: {
+          rag_enabled: retrievedChunks.length > 0,
+          chunks_retrieved: retrievedChunks.length,
+        }
+      });
+
     return new Response(
       JSON.stringify({
         message: aiMessage,
-        sources: [],
+        sources: sources,
         metadata: {
           model_used: actualModelUsed,
           configured_model: configuredModel,
-          tokens_used: tokensUsed
+          tokens_used: tokensUsed,
+          rag_enabled: retrievedChunks.length > 0,
+          chunks_retrieved: retrievedChunks.length
         },
         tokens_used: tokensUsed
       }),

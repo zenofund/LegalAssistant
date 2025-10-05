@@ -1,7 +1,7 @@
-// @deno-types="npm:@types/pdf-parse@1.1.1"
-import pdfParse from "npm:pdf-parse@1.1.5";
+import pdfParse from "npm:pdf-parse@1.1.1";
 // @deno-types="npm:@types/mammoth@1.0.5"
 import mammoth from "npm:mammoth@1.6.0";
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,26 +46,21 @@ Deno.serve(async (req: Request) => {
     if (fileExtension === 'txt') {
       content = await file.text();
     } else if (fileExtension === 'pdf') {
-      // For PDF extraction, you would typically use a library like pdf-parse
-      // For now, we'll use a placeholder
       content = await extractPDFContent(file);
     } else if (fileExtension === 'docx') {
-      // For DOCX extraction, you would use a library like mammoth
       content = await extractDOCXContent(file);
     } else {
       throw new Error("Unsupported file type");
     }
 
     // 2. Chunk the content
-    const chunks = chunkText(content, 1000, 200); // 1000 chars per chunk, 200 overlap
+    const chunks = chunkText(content, 1000, 200);
 
     // 3. Generate embeddings for each chunk
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
       throw new Error("OpenAI API key not configured");
     }
-
-    const embeddings = await generateEmbeddings(chunks, openaiApiKey);
 
     // 4. Store document and chunks in database
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -75,39 +70,55 @@ Deno.serve(async (req: Request) => {
       throw new Error("Supabase configuration missing");
     }
 
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Create document record
-    const documentResponse = await fetch(`${supabaseUrl}/rest/v1/documents`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${supabaseServiceKey}`,
-        "Content-Type": "application/json",
-        "apikey": supabaseServiceKey,
-        "Prefer": "return=representation"
-      },
-      body: JSON.stringify({
+    const { data: document, error: docError } = await supabase
+      .from('documents')
+      .insert({
         title: fileName,
-        type: 'case', // This should be determined from content analysis
+        type: 'case',
         file_url: `documents/${fileName}`,
         content: content,
-        embeddings: embeddings[0], // Store first chunk embedding as representative
         metadata: {
           file_size: file.size,
           file_type: fileExtension,
           chunks_count: chunks.length,
           processed_at: new Date().toISOString()
         },
-        is_public: true, // Make documents searchable
+        is_public: false,
         uploaded_by: userId
       })
-    });
+      .select()
+      .single();
 
-    if (!documentResponse.ok) {
-      const errorText = await documentResponse.text();
-      throw new Error(`Failed to store document: ${errorText}`);
+    if (docError || !document) {
+      throw new Error(`Failed to store document: ${docError?.message}`);
     }
 
-    const documentData = await documentResponse.json();
-    const document = Array.isArray(documentData) ? documentData[0] : documentData;
+    // Generate embeddings for each chunk
+    const embeddings = await generateEmbeddings(chunks, openaiApiKey);
+
+    // Insert document chunks with embeddings
+    const chunksData = chunks.map((chunk, index) => ({
+      document_id: document.id,
+      content: chunk,
+      embedding: JSON.stringify(embeddings[index]),
+      chunk_index: index,
+      metadata: {
+        char_count: chunk.length,
+        word_count: chunk.split(/\s+/).length
+      }
+    }));
+
+    const { error: chunksError } = await supabase
+      .from('document_chunks')
+      .insert(chunksData);
+
+    if (chunksError) {
+      console.error('Failed to store chunks:', chunksError);
+      throw new Error(`Failed to store document chunks: ${chunksError.message}`);
+    }
 
     return new Response(
       JSON.stringify({
@@ -218,7 +229,7 @@ async function generateEmbeddings(texts: string[], apiKey: string): Promise<numb
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "text-embedding-3-small",
+        model: "text-embedding-ada-002",
         input: text,
       }),
     });
