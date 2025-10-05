@@ -362,18 +362,7 @@ export function EnhancedChatInterface() {
       {/* Input Area */}
       <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          {showUsage && (
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
-                Daily Usage: <span className="font-semibold">Chats: {usageData.current}/{usageData.max === -1 ? '∞' : usageData.max}</span>
-              </span>
-              {usageData.current >= usageData.max * 0.8 && usageData.current < usageData.max && (
-                <span className="text-amber-600 text-xs">
-                  {usageData.max - usageData.current} chats remaining today
-                </span>
-              )}
-            </div>
-          )}
+          
           <form onSubmit={handleSubmit} className="relative">
             <div className="relative">
               <textarea
