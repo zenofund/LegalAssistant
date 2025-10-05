@@ -24,7 +24,8 @@ import {
   Sparkles,
   Upload,
   ChevronUp,
-  ArrowUp
+  ArrowUp,
+  Mic
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
@@ -49,6 +50,7 @@ export function EnhancedChatInterface() {
   const [showCaseBriefGenerator, setShowCaseBriefGenerator] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const [usageData, setUsageData] = useState({ current: 0, max: 50 });
   const [limitError, setLimitError] = useState<any>(null);
   const [showToolsMenu, setShowToolsMenu] = useState(false);
@@ -64,6 +66,37 @@ export function EnhancedChatInterface() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportHeight(window.innerHeight);
+    };
+
+    const handleVisualViewportResize = () => {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (message) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [message]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -331,7 +364,10 @@ export function EnhancedChatInterface() {
   if (!profile) return null;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div
+      className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900"
+      style={{ height: `${viewportHeight}px` }}
+    >
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -373,13 +409,13 @@ export function EnhancedChatInterface() {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
-                className="w-full px-4 py-3 pr-32 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors"
+                className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors"
                 rows={1}
                 disabled={isLoading}
               />
 
               {/* Inline Actions */}
-              <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+              <div className="absolute right-2 bottom-2 flex items-center gap-1">
                 {/* Tools Menu Button - Only show for Pro/Enterprise users */}
                 {showAITools && (
                   <div className="relative">
@@ -387,7 +423,7 @@ export function EnhancedChatInterface() {
                       <button
                         type="button"
                         onClick={() => setShowToolsMenu(!showToolsMenu)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                         aria-label="Open Legal Tools"
                       >
                         <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-300" />
@@ -403,6 +439,18 @@ export function EnhancedChatInterface() {
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center space-x-2 whitespace-nowrap"
                         >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowUploadModal(true);
+                              setShowToolsMenu(false);
+                            }}
+                            className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Upload Document"
+                          >
+                            <Upload className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                            <span className="text-xs text-gray-700 dark:text-gray-300">Upload</span>
+                          </button>
                           {hasCitationGenerator && (
                             <button
                               type="button"
@@ -456,30 +504,58 @@ export function EnhancedChatInterface() {
                   <button
                     type="button"
                     onClick={exportChat}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                     title="Export Chat"
                   >
                     <Download className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                   </button>
                 )}
 
-                {/* Send Button - Circular with themed background */}
+                {/* Send/Voice Button - Dynamic with themed background */}
                 <button
                   type="submit"
-                  disabled={!message.trim() || isLoading}
+                  disabled={isLoading}
                   className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-all p-2",
-                    !message.trim() || isLoading
-                      ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
-                      : "bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100"
+                    "w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                    message.trim()
+                      ? "bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100"
+                      : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
                   )}
-                  title="Send Message"
+                  title={message.trim() ? "Send Message" : "Voice Input (Coming Soon)"}
                 >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 text-white dark:text-gray-900 animate-spin" />
-                  ) : (
-                    <ArrowUp className="h-4 w-4 text-white dark:text-gray-900" />
-                  )}
+                  <AnimatePresence mode="wait">
+                    {isLoading ? (
+                      <motion.div
+                        key="loading"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Loader2 className="h-4 w-4 text-white dark:text-gray-900 animate-spin" />
+                      </motion.div>
+                    ) : message.trim() ? (
+                      <motion.div
+                        key="send"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <ArrowUp className="h-4 w-4 text-white dark:text-gray-900" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="mic"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Mic className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </button>
               </div>
             </div>
