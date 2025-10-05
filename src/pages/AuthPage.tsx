@@ -27,7 +27,7 @@ export function AuthPage() {
               AI-Powered Legal Research for Nigerian Professionals
             </h1>
             
-            <p className="text-xl opacity-90 mb-8">
+            <p className="text-xl text-white/90 mb-8">
               Streamline your legal research with advanced AI, comprehensive case databases, 
               and intelligent document analysis.
             </p>
@@ -39,7 +39,7 @@ export function AuthPage() {
                 transition={{ delay: 0.3 }}
                 className="flex items-center text-lg"
               >
-                <BookOpen className="h-6 w-6 mr-3 text-emerald-300" />
+                <BookOpen className="h-6 w-6 mr-3 text-emerald-200" />
                 <span>Comprehensive legal database</span>
               </motion.div>
               
@@ -49,7 +49,7 @@ export function AuthPage() {
                 transition={{ delay: 0.4 }}
                 className="flex items-center text-lg"
               >
-                <Zap className="h-6 w-6 mr-3 text-yellow-300" />
+                <Zap className="h-6 w-6 mr-3 text-yellow-200" />
                 <span>Instant AI-powered insights</span>
               </motion.div>
               
@@ -59,7 +59,7 @@ export function AuthPage() {
                 transition={{ delay: 0.5 }}
                 className="flex items-center text-lg"
               >
-                <Scale className="h-6 w-6 mr-3 text-blue-300" />
+                <Scale className="h-6 w-6 mr-3 text-blue-200" />
                 <span>Nigerian jurisprudence focus</span>
               </motion.div>
             </div>
