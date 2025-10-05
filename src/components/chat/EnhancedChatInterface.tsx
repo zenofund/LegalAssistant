@@ -57,6 +57,7 @@ export function EnhancedChatInterface() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharingMessage, setSharingMessage] = useState<string | null>(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -82,9 +83,13 @@ export function EnhancedChatInterface() {
     const handleVisualViewportResize = () => {
       if (window.visualViewport) {
         setViewportHeight(window.visualViewport.height);
-        setTimeout(() => {
-          scrollToBottom('auto');
-        }, 100);
+        
+        // If input is focused, scroll to bottom when keyboard opens/closes
+        if (isInputFocused) {
+          setTimeout(() => {
+            scrollToBottom('auto');
+          }, 100);
+        }
       }
     };
 
@@ -100,12 +105,27 @@ export function EnhancedChatInterface() {
         window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
       }
     };
-  }, []);
+  }, [isInputFocused]);
 
   const handleTextareaFocus = () => {
+    setIsInputFocused(true);
+    
+    // Multiple scroll attempts to ensure visibility
+    setTimeout(() => {
+      scrollToBottom('auto');
+    }, 100);
+    
     setTimeout(() => {
       scrollToBottom('auto');
     }, 300);
+    
+    setTimeout(() => {
+      scrollToBottom('auto');
+    }, 500);
+  };
+
+  const handleTextareaBlur = () => {
+    setIsInputFocused(false);
   };
 
   useEffect(() => {
@@ -419,6 +439,7 @@ export function EnhancedChatInterface() {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={handleTextareaFocus}
+                onBlur={handleTextareaBlur}
                 placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
                 className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors touch-action-manipulation"
                 rows={1}
