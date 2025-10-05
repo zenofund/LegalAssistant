@@ -212,12 +212,9 @@ export function EnhancedDashboardPage() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
-          <div className="flex items-center space-x-2">
-            <DynamicLogo className="w-6 h-6 rounded object-contain" />
-            <span className="font-semibold text-gray-900 dark:text-dark-primary">easyAI</span>
-          </div>
-          
+
+          <DynamicLogo className="w-24 h-auto rounded object-contain" />
+
           <div className="w-8" /> {/* Spacer for centering */}
         </div>
 

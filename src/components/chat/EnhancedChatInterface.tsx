@@ -35,6 +35,7 @@ import { CaseSummarizerModal } from './CaseSummarizerModal';
 import { CaseBriefGeneratorModal } from './CaseBriefGeneratorModal';
 import { UpgradeModal } from '../subscription/UpgradeModal';
 import { UploadModal } from '../documents/UploadModal';
+import { DynamicLogo } from '../ui/DynamicLogo';
 import { formatDate, cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
@@ -436,8 +437,8 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Scale className="h-10 w-10 text-white" />
+          <div className="mx-auto mb-6 flex items-center justify-center">
+            <DynamicLogo className="w-32 h-auto rounded-lg object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             Welcome to easyAI
@@ -551,27 +552,27 @@ function EnhancedMessageBubble({
               remarkPlugins={[remarkGfm]}
               components={{
                 // Customize heading styles
-                h1: ({children}) => <h1 className="text-xl font-bold mb-3 text-gray-900">{children}</h1>,
-                h2: ({children}) => <h2 className="text-lg font-semibold mb-2 text-gray-800">{children}</h2>,
-                h3: ({children}) => <h3 className="text-base font-medium mb-2 text-gray-700">{children}</h3>,
-                
+                h1: ({children}) => <h1 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">{children}</h1>,
+                h2: ({children}) => <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">{children}</h2>,
+                h3: ({children}) => <h3 className="text-base font-medium mb-2 text-gray-700 dark:text-gray-300">{children}</h3>,
+
                 // Customize paragraph styles
-                p: ({children}) => <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>,
-                
+                p: ({children}) => <p className="mb-3 text-gray-800 dark:text-gray-200 leading-relaxed">{children}</p>,
+
                 // Customize list styles
                 ul: ({children}) => <ul className="mb-3 ml-4 space-y-1">{children}</ul>,
                 ol: ({children}) => <ol className="mb-3 ml-4 space-y-1">{children}</ol>,
-                li: ({children}) => <li className="text-gray-700">{children}</li>,
-                
+                li: ({children}) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
+
                 // Customize emphasis styles
-                strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                em: ({children}) => <em className="italic text-gray-800">{children}</em>,
-                
+                strong: ({children}) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
+                em: ({children}) => <em className="italic text-gray-800 dark:text-gray-200">{children}</em>,
+
                 // Customize code styles
                 code: ({children, className}) => {
                   const isInline = !className;
                   return isInline ? (
-                    <code className="px-1.5 py-0.5 bg-gray-100 text-gray-800 rounded text-sm font-mono">
+                    <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-mono">
                       {children}
                     </code>
                   ) : (
@@ -579,36 +580,36 @@ function EnhancedMessageBubble({
                   );
                 },
                 pre: ({children}) => (
-                  <pre className="mb-3 p-3 bg-gray-100 rounded-lg overflow-x-auto">
+                  <pre className="mb-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-x-auto">
                     {children}
                   </pre>
                 ),
-                
+
                 // Customize blockquote styles
                 blockquote: ({children}) => (
-                  <blockquote className="mb-3 pl-4 border-l-4 border-blue-500 bg-blue-50 py-2 italic text-gray-700">
+                  <blockquote className="mb-3 pl-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/30 py-2 italic text-gray-800 dark:text-gray-200">
                     {children}
                   </blockquote>
                 ),
-                
+
                 // Customize table styles
                 table: ({children}) => (
                   <div className="mb-3 overflow-x-auto">
-                    <table className="min-w-full border border-gray-200 rounded-lg">
+                    <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg">
                       {children}
                     </table>
                   </div>
                 ),
                 thead: ({children}) => (
-                  <thead className="bg-gray-50">{children}</thead>
+                  <thead className="bg-gray-50 dark:bg-gray-800">{children}</thead>
                 ),
                 th: ({children}) => (
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 border-b border-gray-200">
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
                     {children}
                   </th>
                 ),
                 td: ({children}) => (
-                  <td className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
+                  <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
                     {children}
                   </td>
                 ),

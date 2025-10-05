@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download, ChevronDown, UserPlus, Lock, LayoutDashboard } from 'lucide-react';
+import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, hasPermission } from '../../lib/supabase';
 import { formatCurrency, formatDate } from '../../lib/utils'; // Assuming formatDate exists
@@ -112,22 +112,12 @@ export function AdminDashboard() {
                     <button
                       onClick={() => {
                         setShowUserMenu(false);
-                        setActiveTab('users');
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      <span>Add User Info</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowUserMenu(false);
                         window.dispatchEvent(new CustomEvent('openSettings'));
                       }}
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
-                      <Lock className="h-4 w-4" />
-                      <span>Admin Settings</span>
+                      <Settings className="h-4 w-4" />
+                      <span>Settings</span>
                     </button>
                     <button
                       onClick={() => {
@@ -136,7 +126,7 @@ export function AdminDashboard() {
                       }}
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
-                      <LayoutDashboard className="h-4 w-4" />
+                      <MessageSquare className="h-4 w-4" />
                       <span>Chat Dashboard</span>
                     </button>
                   </div>
