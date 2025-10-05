@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
+import { Tooltip } from '../ui/Tooltip';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
 import { CitationGeneratorModal } from './CitationGeneratorModal';
@@ -36,7 +37,7 @@ import { CaseBriefGeneratorModal } from './CaseBriefGeneratorModal';
 import { UpgradeModal } from '../subscription/UpgradeModal';
 import { UploadModal } from '../documents/UploadModal';
 import { DynamicLogo } from '../ui/DynamicLogo';
-import { formatDate, cn } from '../../lib/utils';
+import { formatDate, cn, hasPremiumAccess } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
@@ -325,6 +326,7 @@ export function EnhancedChatInterface() {
   const hasProFeatures = currentPlan?.tier === 'pro' || currentPlan?.tier === 'enterprise';
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
   const showUsage = !isAdmin && usageData.max !== -1;
+  const showAITools = hasPremiumAccess(currentPlan?.tier, profile?.role);
 
   if (!profile) return null;
 
@@ -378,72 +380,76 @@ export function EnhancedChatInterface() {
 
               {/* Inline Actions */}
               <div className="absolute right-3 bottom-3 flex items-center space-x-2">
-                {/* Tools Menu Button */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowToolsMenu(!showToolsMenu)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                    title="AI Tools"
-                  >
-                    <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                  </button>
-
-                  {/* Tools Popup Menu */}
-                  <AnimatePresence>
-                    {showToolsMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center space-x-2 whitespace-nowrap"
+                {/* Tools Menu Button - Only show for Pro/Enterprise users */}
+                {showAITools && (
+                  <div className="relative">
+                    <Tooltip content="Legal Tools" position="top">
+                      <button
+                        type="button"
+                        onClick={() => setShowToolsMenu(!showToolsMenu)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        aria-label="Open Legal Tools"
                       >
-                        {hasCitationGenerator && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowCitationGenerator(true);
-                              setShowToolsMenu(false);
-                            }}
-                            className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            title="Legal Citation"
-                          >
-                            <Quote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs text-gray-700 dark:text-gray-300">Citation</span>
-                          </button>
-                        )}
-                        {hasProFeatures && (
-                          <>
+                        <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                      </button>
+                    </Tooltip>
+
+                    {/* Tools Popup Menu */}
+                    <AnimatePresence>
+                      {showToolsMenu && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center space-x-2 whitespace-nowrap"
+                        >
+                          {hasCitationGenerator && (
                             <button
                               type="button"
                               onClick={() => {
-                                setShowCaseSummarizer(true);
+                                setShowCitationGenerator(true);
                                 setShowToolsMenu(false);
                               }}
                               className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                              title="Case Summarizer"
+                              title="Legal Citation"
                             >
-                              <Scale className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                              <span className="text-xs text-gray-700 dark:text-gray-300">Summarizer</span>
+                              <Quote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              <span className="text-xs text-gray-700 dark:text-gray-300">Citation</span>
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowCaseBriefGenerator(true);
-                                setShowToolsMenu(false);
-                              }}
-                              className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                              title="Brief Generator"
-                            >
-                              <Gavel className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                              <span className="text-xs text-gray-700 dark:text-gray-300">Brief</span>
-                            </button>
-                          </>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                          )}
+                          {hasProFeatures && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowCaseSummarizer(true);
+                                  setShowToolsMenu(false);
+                                }}
+                                className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                title="Case Summarizer"
+                              >
+                                <Scale className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                <span className="text-xs text-gray-700 dark:text-gray-300">Summarizer</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowCaseBriefGenerator(true);
+                                  setShowToolsMenu(false);
+                                }}
+                                className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                title="Brief Generator"
+                              >
+                                <Gavel className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                <span className="text-xs text-gray-700 dark:text-gray-300">Brief</span>
+                              </button>
+                            </>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {/* Download Button */}
                 {messages.length > 0 && (
@@ -886,13 +892,27 @@ function EnhancedMessageBubble({
         {/* Sources */}
         {message.sources && message.sources.length > 0 && (
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-2 mb-4">
-              <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Sources
-              </span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    Sources
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {message.sources.length} legal {message.sources.length === 1 ? 'reference' : 'references'} found
+                  </p>
+                </div>
+              </div>
+              {message.sources.length > 3 && (
+                <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                  +{message.sources.length - 3} more
+                </span>
+              )}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
               {message.sources.slice(0, 3).map((source, index) => (
                 <EnhancedSourceCard key={index} source={source} index={index + 1} />
               ))}
