@@ -117,7 +117,7 @@ export function AdminDashboard() {
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
                       <Settings className="h-4 w-4" />
-                      <span>Settings</span>
+                      <span>Admin Settings</span>
                     </button>
                     <button
                       onClick={() => {

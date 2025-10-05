@@ -7,9 +7,9 @@ interface DynamicLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 
 export function DynamicLogo({ className = '', alt = 'easyAI Logo', ...props }: DynamicLogoProps) {
   const { theme } = useTheme();
-  
-  const logoSrc = theme === 'dark' ? '/2.png' : '/1.png';
-  
+
+  const logoSrc = theme === 'dark' ? '/2 copy.png' : '/1 copy.png';
+
   return (
     <img
       src={logoSrc}
