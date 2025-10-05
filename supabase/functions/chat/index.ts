@@ -12,6 +12,23 @@ interface ChatRequest {
   user_id: string;
 }
 
+// Map configured model names to actual OpenAI API model names
+// This allows flexibility in database configuration while ensuring API compatibility
+function getOpenAIModel(configuredModel: string): string {
+  const modelMap: Record<string, string> = {
+    'gpt-5': 'gpt-4o',
+    'gpt-5-mini': 'gpt-4o-mini',
+    'gpt-5-nano': 'gpt-4o-mini',
+    'gpt-4o': 'gpt-4o',
+    'gpt-4o-mini': 'gpt-4o-mini',
+    'gpt-4-turbo': 'gpt-4-turbo-preview',
+    'gpt-4': 'gpt-4',
+    'gpt-3.5-turbo': 'gpt-3.5-turbo'
+  };
+
+  return modelMap[configuredModel] || 'gpt-4o-mini';
+}
+
 Deno.serve(async (req: Request) => {
   try {
     if (req.method === "OPTIONS") {
@@ -154,44 +171,109 @@ Deno.serve(async (req: Request) => {
       }
     ];
 
-    const modelToUse = plan?.ai_model || 'gpt-4o-mini';
+    const configuredModel = plan?.ai_model || 'gpt-4o-mini';
+    const modelToUse = getOpenAIModel(configuredModel);
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: modelToUse,
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
+    console.log(`Using model: ${modelToUse} (configured: ${configuredModel}) for user ${user_id}`);
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text();
-      console.error('OpenAI API error:', errorData);
+    let openaiResponse;
+    let actualModelUsed = modelToUse;
 
-      if (openaiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({
-            error: "AI_RATE_LIMIT:The AI service is currently experiencing high demand. Please try again in a moment."
-          }),
-          {
-            status: 429,
+    try {
+      openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        const errorText = await openaiResponse.text();
+        console.error(`OpenAI API error (${openaiResponse.status}):`, errorText);
+
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: { message: errorText } };
+        }
+
+        if (openaiResponse.status === 404 && errorData.error?.message?.includes('model')) {
+          console.log(`Model ${modelToUse} not found, falling back to gpt-4o-mini`);
+          actualModelUsed = 'gpt-4o-mini';
+
+          openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
             headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
+              'Authorization': `Bearer ${openaiApiKey}`,
+              'Content-Type': 'application/json',
             },
-          }
-        );
-      }
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: messages,
+              temperature: 0.7,
+              max_tokens: 2000,
+            }),
+          });
 
+          if (!openaiResponse.ok) {
+            const fallbackErrorText = await openaiResponse.text();
+            console.error('Fallback model also failed:', fallbackErrorText);
+            throw new Error(`Fallback model failed: ${fallbackErrorText}`);
+          }
+        } else if (openaiResponse.status === 429) {
+          return new Response(
+            JSON.stringify({
+              error: "AI_RATE_LIMIT:The AI service is currently experiencing high demand. Please try again in a moment."
+            }),
+            {
+              status: 429,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        } else if (openaiResponse.status === 401) {
+          return new Response(
+            JSON.stringify({
+              error: "AI_SERVER_ERROR:API authentication failed. Please contact support."
+            }),
+            {
+              status: 500,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        } else {
+          return new Response(
+            JSON.stringify({
+              error: `AI_SERVER_ERROR:Failed to get response from AI service. Please try again. (Status: ${openaiResponse.status})`
+            }),
+            {
+              status: 500,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+      }
+    } catch (fetchError) {
+      console.error('Network error calling OpenAI:', fetchError);
       return new Response(
         JSON.stringify({
-          error: "AI_SERVER_ERROR:Failed to get response from AI service. Please try again."
+          error: "AI_SERVER_ERROR:Network error connecting to AI service. Please check your connection and try again."
         }),
         {
           status: 500,
@@ -204,8 +286,24 @@ Deno.serve(async (req: Request) => {
     }
 
     const aiData = await openaiResponse.json();
-    const aiMessage = aiData.choices[0].message.content;
+    const aiMessage = aiData.choices?.[0]?.message?.content;
     const tokensUsed = aiData.usage?.total_tokens || 0;
+
+    if (!aiMessage) {
+      console.error('No message in AI response:', aiData);
+      return new Response(
+        JSON.stringify({
+          error: "AI_SERVER_ERROR:Invalid response from AI service. Please try again."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
 
     if (!isAdmin) {
       const today = new Date().toISOString().split('T')[0];
@@ -228,7 +326,8 @@ Deno.serve(async (req: Request) => {
         message: aiMessage,
         sources: [],
         metadata: {
-          model_used: modelToUse,
+          model_used: actualModelUsed,
+          configured_model: configuredModel,
           tokens_used: tokensUsed
         },
         tokens_used: tokensUsed
