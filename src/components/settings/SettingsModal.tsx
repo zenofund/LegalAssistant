@@ -38,17 +38,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       title="Settings"
       maxWidth="2xl"
     >
-      <div className="flex h-96">
+      <div className="flex flex-col lg:flex-row lg:h-96">
         {/* Tabs */}
-        <div className="w-48 border-r border-gray-200 dark:border-gray-700 pr-4">
-          <nav className="space-y-1">
+        <div className="w-full lg:w-48 lg:border-r border-gray-200 dark:border-gray-700 lg:pr-4 mb-4 lg:mb-0">
+          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible space-x-2 lg:space-x-0 lg:space-y-1 pb-2 lg:pb-0 border-b lg:border-b-0 border-gray-200 dark:border-gray-700">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg text-sm transition-colors ${
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -63,7 +63,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 pl-6">
+        <div className="flex-1 lg:pl-6">
           {activeTab === 'profile' && <ProfileSettings profile={profile} updateProfile={updateProfile} />}
           {activeTab === 'subscription' && <SubscriptionSettings profile={profile} />}
           {activeTab === 'notifications' && <NotificationSettings />}

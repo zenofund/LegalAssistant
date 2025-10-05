@@ -118,11 +118,11 @@ export function UsersTab() {
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <table className="w-full min-w-[640px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -143,7 +143,7 @@ export function UsersTab() {
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td className="px-6 py-4">
+                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="animate-pulse flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                           <div className="space-y-2">
@@ -169,7 +169,7 @@ export function UsersTab() {
                 ) : (
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                             <Users className="h-5 w-5 text-gray-500" />

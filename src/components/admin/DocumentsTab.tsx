@@ -134,11 +134,11 @@ export function DocumentsTab() {
       {/* Documents Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <table className="w-full min-w-[768px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                     Document
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -162,7 +162,7 @@ export function DocumentsTab() {
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td className="px-6 py-4">
+                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="animate-pulse space-y-2">
                           <div className="h-4 bg-gray-200 rounded w-48"></div>
                           <div className="h-3 bg-gray-200 rounded w-32"></div>
@@ -188,10 +188,10 @@ export function DocumentsTab() {
                 ) : (
                   filteredDocuments.map((doc) => (
                     <tr key={doc.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                      <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div className="flex items-start space-x-3">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            doc.type === 'case' 
+                            doc.type === 'case'
                               ? 'bg-blue-100 text-blue-600'
                               : doc.type === 'statute'
                               ? 'bg-emerald-100 text-emerald-600'
