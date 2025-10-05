@@ -297,8 +297,9 @@ export function EnhancedSidebar({
       <div className="flex-1 overflow-y-auto px-4">
         <div className="space-y-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Recent Conversations
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center space-x-2">
+              <History className="h-3.5 w-3.5" />
+              <span>Chat History</span>
             </h3>
             <div className="flex items-center space-x-1">
               <Button
@@ -310,12 +311,18 @@ export function EnhancedSidebar({
               >
                 <RefreshCw className="h-3 w-3" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-1"
+                onClick={onShowHistory}
+                title="View all history"
+              >
                 <Filter className="h-3 w-3" />
               </Button>
             </div>
           </div>
-          
+
           {filteredSessions.length === 0 ? (
             <div className="text-center py-8">
               <MessageSquare className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
@@ -324,8 +331,6 @@ export function EnhancedSidebar({
             </div>
           ) : (
             <div className="space-y-1">
-              {/* --- FIX STARTS HERE --- */}
-              {/* The map loop now only contains the ChatSessionItem component */}
               {filteredSessions.map((session) => (
                 <ChatSessionItem
                   key={session.id}
@@ -336,7 +341,6 @@ export function EnhancedSidebar({
                   onDelete={() => deleteSession(session.id)}
                 />
               ))}
-              {/* --- FIX ENDS HERE --- */}
             </div>
           )}
         </div>

@@ -889,12 +889,12 @@ function EnhancedMessageBubble({
             <div className="flex items-center space-x-2 mb-4">
               <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Sources ({message.sources.length})
+                Sources
               </span>
             </div>
-            <div className="grid gap-3">
-              {message.sources.map((source, index) => (
-                <EnhancedSourceCard key={index} source={source} />
+            <div className="space-y-3">
+              {message.sources.slice(0, 3).map((source, index) => (
+                <EnhancedSourceCard key={index} source={source} index={index + 1} />
               ))}
             </div>
           </div>
@@ -935,64 +935,98 @@ function EnhancedMessageBubble({
   );
 }
 
-function EnhancedSourceCard({ source }: { source: DocumentSource }) {
+function EnhancedSourceCard({ source, index }: { source: DocumentSource; index: number }) {
+  const [showFullExcerpt, setShowFullExcerpt] = useState(false);
+
+  const handleSourceClick = () => {
+    if (source.id) {
+      window.open(`/document/${source.id}`, '_blank');
+    }
+  };
+
+  const getTypeColor = () => {
+    switch (source.type) {
+      case 'case':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'statute':
+        return 'text-emerald-600 dark:text-emerald-400';
+      case 'regulation':
+        return 'text-purple-600 dark:text-purple-400';
+      default:
+        return 'text-gray-600 dark:text-gray-400';
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className="group"
     >
       <div className="flex items-start space-x-3">
-        <div className="flex-shrink-0">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            source.type === 'case'
-              ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-              : source.type === 'statute'
-              ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400'
-              : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-          }`}>
-            {source.type === 'case' ? <Scale className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
-          </div>
-        </div>
+        <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0">
+          {index}.
+        </span>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-              {source.title}
-            </h4>
-            <div className="flex items-center space-x-2 ml-2">
-              <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full">
-                {Math.round(source.relevance_score * 100)}% match
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <button
+              onClick={handleSourceClick}
+              className="text-left flex-1 group/link"
+            >
+              <h4 className={`text-sm font-semibold ${getTypeColor()} group-hover/link:underline transition-all line-clamp-2`}>
+                {source.title}
+              </h4>
+            </button>
+
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
+                {Math.round(source.relevance_score * 100)}%
               </span>
-              <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
-                <ExternalLink className="h-3 w-3" />
-              </Button>
+              <button
+                onClick={handleSourceClick}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                title="Open source"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+              </button>
             </div>
           </div>
 
           {source.citation && (
-            <div className="flex items-center space-x-2 mb-2">
-              <BookOpen className="h-3 w-3 text-gray-400 dark:text-gray-500" />
-              <span className="text-xs text-gray-600 dark:text-gray-400 font-mono">{source.citation}</span>
+            <div className="mb-2">
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded inline-block">
+                {source.citation}
+              </p>
             </div>
           )}
 
+          {source.excerpt && (
+            <p className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${showFullExcerpt ? '' : 'line-clamp-2'}`}>
+              {source.excerpt}
+            </p>
+          )}
 
-          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-3">
-            {source.excerpt}
-          </p>
-          
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
-            {source.page && (
-              <div className="flex items-center space-x-1">
-                <FileText className="h-3 w-3" />
-                <span>Page {source.page}</span>
-              </div>
-            )}
-            <div className="flex items-center space-x-1">
-              <Tag className="h-3 w-3" />
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+              {source.page && (
+                <span className="flex items-center space-x-1">
+                  <FileText className="h-3 w-3" />
+                  <span>Page {source.page}</span>
+                </span>
+              )}
               <span className="capitalize">{source.type}</span>
             </div>
+
+            {source.excerpt && source.excerpt.length > 150 && (
+              <button
+                onClick={() => setShowFullExcerpt(!showFullExcerpt)}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {showFullExcerpt ? 'Show less' : 'Show more'}
+              </button>
+            )}
           </div>
         </div>
       </div>
