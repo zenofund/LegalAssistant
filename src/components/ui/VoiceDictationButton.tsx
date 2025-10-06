@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { Tooltip } from './Tooltip';
 import { useToast } from './Toast';
+import { supabase } from '../../lib/supabase';
 import type { UserProfile } from '../../types/database';
 
 interface VoiceDictationButtonProps {
@@ -192,6 +193,13 @@ export function VoiceDictationButton({
     setRecordingState('transcribing');
 
     try {
+      // Get the current authenticated user's session token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        throw new Error('Authentication required. Please sign in again.');
+      }
+
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
@@ -200,7 +208,7 @@ export function VoiceDictationButton({
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${session.access_token}`
           },
           body: formData
         }
@@ -227,8 +235,12 @@ export function VoiceDictationButton({
     } catch (error: any) {
       console.error('Transcription error:', error);
 
-      if (error.message.includes('PLAN_LIMIT')) {
+      if (error.message.includes('Authentication required')) {
+        showError('Authentication Error', 'Please sign in again to use voice dictation.');
+      } else if (error.message.includes('PLAN_LIMIT')) {
         showError('Upgrade Required', 'Voice transcription requires a Pro or Enterprise plan.');
+      } else if (error.message.includes('Unauthorized')) {
+        showError('Authentication Error', 'Your session has expired. Please sign in again.');
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         showError('Network Error', 'Failed to connect to transcription service. Please check your connection.');
       } else {
