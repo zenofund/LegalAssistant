@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Chrome } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -113,41 +113,38 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
         <div>
           <Input
-            label="Full name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={errors.name}
-            placeholder="Enter your full name"
+            placeholder="Full name"
           />
         </div>
 
         <div>
           <Input
-            label="Email address"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             error={errors.email}
-            placeholder="Enter your email"
+            placeholder="Email address"
           />
         </div>
 
         <div>
           <div className="relative">
             <Input
-              label="Password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               error={errors.password}
-              placeholder="Create a password"
+              placeholder="Password"
               className="pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -157,18 +154,17 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         <div>
           <div className="relative">
             <Input
-              label="Confirm password"
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               error={errors.confirmPassword}
-              placeholder="Confirm your password"
+              placeholder="Confirm password"
               className="pr-10"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -183,7 +179,35 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           Create account
         </Button>
 
-        <div className="text-center">
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white dark:bg-dark-secondary text-gray-500 dark:text-gray-400">or</span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <Chrome className="h-5 w-5" />
+            <span>Continue with Google</span>
+          </button>
+          <button
+            type="button"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#1877F2">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>Continue with Facebook</span>
+          </button>
+        </div>
+
+        <div className="text-center mt-6">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Already have an account?{' '}
             <button
