@@ -450,7 +450,7 @@ export function EnhancedChatInterface() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
               onClick={() => scrollToBottom('smooth')}
-              className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-10"
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-10"
               title="Scroll to bottom"
             >
               <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />
