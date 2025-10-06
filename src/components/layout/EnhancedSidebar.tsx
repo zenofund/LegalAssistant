@@ -1,30 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  MessageSquare,
-  Plus,
-  History,
-  BookOpen,
-  Upload,
-  Settings,
-  User,
-  LogOut,
-  Menu,
-  X,
-  Search,
-  Filter,
-  Archive,
-  Star,
-  Trash2,
-  Check,
-  MoreHorizontal,
-  Crown,
-  Zap,
-  Scale,
-  Infinity,
-  RefreshCw,
-  Edit2
-} from 'lucide-react';
+import { MessageSquare, Plus, History, BookOpen, Upload, Settings, User, LogOut, Menu, X, Search, Filter, Archive, Star, Trash2, Check, MoreHorizontal, Crown, Zap, Scale, Infinity, RefreshCw, CreditCard as Edit2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
 import { Button } from '../ui/Button';
