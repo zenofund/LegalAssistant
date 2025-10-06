@@ -261,7 +261,9 @@ Deno.serve(async (req: Request) => {
 
 ${briefInstructions}
 
-You must respond with a valid JSON object containing the following fields:
+CRITICAL: You must respond with a valid, complete JSON object. Ensure all JSON brackets and braces are properly closed.
+
+Required JSON structure:
 {
   "title": "Brief title",
   "introduction": "Opening statement introducing the matter",
@@ -274,14 +276,19 @@ You must respond with a valid JSON object containing the following fields:
   "citations_used": ["Array of legal authorities cited"]
 }
 
+All fields are required. Use empty strings or empty arrays if content is not applicable.
+
 Ensure the brief is:
 - Professional and persuasive
 - Well-structured with clear headings
 - Properly cited with relevant authorities
 - Tailored to ${jurisdiction} jurisdiction and ${court}
 - Appropriate for ${brief_type} brief format
+- Complete with all JSON structure properly closed
 
-${additional_instructions ? `Additional instructions: ${additional_instructions}` : ''}`;
+${additional_instructions ? `Additional instructions: ${additional_instructions}` : ''}
+
+IMPORTANT: If you approach the token limit, prioritize completing the JSON structure over verbose content. Ensure the response ends with a closing brace.`;
 
     const userPrompt = `Generate a ${brief_type} brief for ${court} in ${jurisdiction}.\n\n` +
       (parties_plaintiff ? `Plaintiff: ${parties_plaintiff}\n` : '') +
@@ -301,8 +308,8 @@ ${additional_instructions ? `Additional instructions: ${additional_instructions}
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 1,
-        max_completion_tokens: 4000,
+        temperature: 0.7,
+        max_completion_tokens: 6000,
         response_format: { type: 'json_object' }
       }),
     });
@@ -327,18 +334,14 @@ ${additional_instructions ? `Additional instructions: ${additional_instructions}
     }
 
     const aiData = await openaiResponse.json();
-    const aiMessage = aiData.choices[0].message.content;
-    const tokensUsed = aiData.usage?.total_tokens || 0;
 
-    let briefData;
-    try {
-      briefData = JSON.parse(aiMessage);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
+    // Validate OpenAI response structure
+    if (!aiData || !aiData.choices || aiData.choices.length === 0) {
+      console.error('Invalid OpenAI response structure:', JSON.stringify(aiData));
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Failed to parse generated brief. Please try again."
+          error: "Received invalid response from AI service. Please try again."
         }),
         {
           status: 500,
@@ -349,6 +352,118 @@ ${additional_instructions ? `Additional instructions: ${additional_instructions}
         }
       );
     }
+
+    const choice = aiData.choices[0];
+    const aiMessage = choice?.message?.content;
+    const tokensUsed = aiData.usage?.total_tokens || 0;
+    const finishReason = choice?.finish_reason;
+
+    // Check if response was truncated
+    if (finishReason === 'length') {
+      console.error('OpenAI response was truncated due to token limit');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Brief generation exceeded length limit. Please try with shorter input or contact support."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Validate AI message content
+    if (!aiMessage || typeof aiMessage !== 'string' || aiMessage.trim().length === 0) {
+      console.error('Empty or invalid AI message:', aiMessage);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Received empty response from AI service. Please try again."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Check for complete JSON structure
+    const trimmedMessage = aiMessage.trim();
+    if (!trimmedMessage.startsWith('{') || !trimmedMessage.endsWith('}')) {
+      console.error('AI response is not valid JSON format:', trimmedMessage.substring(0, 200));
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Received malformed response from AI service. Please try again."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    let briefData;
+    try {
+      briefData = JSON.parse(aiMessage);
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError);
+      console.error('AI message content (first 500 chars):', aiMessage.substring(0, 500));
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to parse generated brief. The response may be incomplete. Please try again."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Validate parsed data structure
+    if (!briefData || typeof briefData !== 'object') {
+      console.error('Parsed brief data is not an object:', briefData);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Generated brief has invalid structure. Please try again."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Ensure required fields have defaults
+    briefData = {
+      title: briefData.title || documentTitle,
+      introduction: briefData.introduction || '',
+      statement_of_facts: briefData.statement_of_facts || '',
+      issues_presented: Array.isArray(briefData.issues_presented) ? briefData.issues_presented : [],
+      legal_arguments: briefData.legal_arguments || '',
+      analysis: briefData.analysis || '',
+      conclusion: briefData.conclusion || '',
+      prayer_for_relief: briefData.prayer_for_relief || null,
+      citations_used: Array.isArray(briefData.citations_used) ? briefData.citations_used : []
+    };
 
     const { data: savedBrief, error: saveError } = await supabase
       .from('case_briefs')
