@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageSquare, Clock, Search, Trash2, Calendar, Check, Edit2 } from 'lucide-react';
+import { MessageSquare, Clock, Search, Trash2, Calendar, Check, CreditCard as Edit2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
