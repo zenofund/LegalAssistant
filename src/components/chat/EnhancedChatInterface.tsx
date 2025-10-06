@@ -31,6 +31,7 @@ import {
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
 import { Tooltip } from '../ui/Tooltip';
+import { VoiceDictationButton } from '../ui/VoiceDictationButton';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
 import { CitationGeneratorModal } from './CitationGeneratorModal';
@@ -577,52 +578,58 @@ export function EnhancedChatInterface() {
                   </Tooltip>
                 )}
 
-                {/* Send/Voice Button - Dynamic with themed background */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={cn(
-                    "w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                    message.trim()
-                      ? "bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100"
-                      : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
-                  )}
-                  title={message.trim() ? "Send Message" : "Voice Input (Coming Soon)"}
-                >
-                  <AnimatePresence mode="wait">
-                    {isLoading ? (
-                      <motion.div
-                        key="loading"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Loader2 className="h-4 w-4 text-white dark:text-gray-900 animate-spin" />
-                      </motion.div>
-                    ) : message.trim() ? (
-                      <motion.div
-                        key="send"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <ArrowUp className="h-4 w-4 text-white dark:text-gray-900" />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="mic"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Mic className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                      </motion.div>
+                {/* Voice Dictation Button */}
+                {!message.trim() && (
+                  <VoiceDictationButton
+                    onTranscriptionComplete={(text) => {
+                      setMessage(prev => prev ? `${prev} ${text}` : text);
+                      setTimeout(() => {
+                        if (textareaRef.current) {
+                          textareaRef.current.focus();
+                        }
+                      }, 100);
+                    }}
+                    userProfile={profile}
+                    disabled={isLoading}
+                  />
+                )}
+
+                {/* Send Button */}
+                {message.trim() && (
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={cn(
+                      "w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                      "bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100"
                     )}
-                  </AnimatePresence>
-                </button>
+                    title="Send Message"
+                  >
+                    <AnimatePresence mode="wait">
+                      {isLoading ? (
+                        <motion.div
+                          key="loading"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <Loader2 className="h-4 w-4 text-white dark:text-gray-900 animate-spin" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="send"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <ArrowUp className="h-4 w-4 text-white dark:text-gray-900" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                )}
               </div>
             </div>
           </form>
