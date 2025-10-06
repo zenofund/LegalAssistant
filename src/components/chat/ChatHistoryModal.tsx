@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageSquare, Clock, Search, Trash2, Calendar } from 'lucide-react';
+import { MessageSquare, Clock, Search, Trash2, Calendar, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
@@ -21,6 +22,7 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [deletedSessionId, setDeletedSessionId] = useState<string | null>(null);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -100,6 +102,8 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
 
       if (error) throw error;
 
+      setDeletedSessionId(sessionId);
+      setTimeout(() => setDeletedSessionId(null), 2000);
       showSuccess('Deleted', 'Conversation deleted successfully');
       await loadChatHistory();
     } catch (error) {
@@ -167,7 +171,7 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
         </div>
 
         {/* Sessions List */}
-        <div className="max-h-[60vh] overflow-y-auto space-y-6">
+        <div className="max-h-[60vh] overflow-y-auto scrollbar-thin space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -193,7 +197,7 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
                     <div
                       key={session.id}
                       onClick={() => handleSessionClick(session.id)}
-                      className="group p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                      className="group p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors relative"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
@@ -214,14 +218,28 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
                             </span>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleDeleteSession(session.id, e)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                        <AnimatePresence mode="wait">
+                          {deletedSessionId === session.id ? (
+                            <motion.div
+                              key="check"
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              className="flex items-center justify-center w-8 h-8"
+                            >
+                              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </motion.div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => handleDeleteSession(session.id, e)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
                   ))}

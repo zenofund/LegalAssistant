@@ -16,6 +16,7 @@ import {
   Archive,
   Star,
   Trash2,
+  Check,
   MoreHorizontal,
   Crown,
   Zap,
@@ -163,13 +164,18 @@ export function EnhancedSidebar({
     }
   };
 
+  const [deletedSessionId, setDeletedSessionId] = useState<string | null>(null);
+  const [archivedSessionId, setArchivedSessionId] = useState<string | null>(null);
+
   const archiveSession = async (sessionId: string) => {
     try {
       await supabase
         .from('chat_sessions')
         .update({ is_archived: true })
         .eq('id', sessionId);
-      
+
+      setArchivedSessionId(sessionId);
+      setTimeout(() => setArchivedSessionId(null), 2000);
       await loadChatSessions();
     } catch (error) {
       console.error('Error archiving session:', error);
@@ -182,7 +188,9 @@ export function EnhancedSidebar({
         .from('chat_sessions')
         .delete()
         .eq('id', sessionId);
-      
+
+      setDeletedSessionId(sessionId);
+      setTimeout(() => setDeletedSessionId(null), 2000);
       await loadChatSessions();
     } catch (error) {
       console.error('Error deleting session:', error);
@@ -294,7 +302,7 @@ export function EnhancedSidebar({
       </div>
 
       {/* Chat History */}
-      <div className="flex-1 overflow-y-auto px-4">
+      <div className="flex-1 overflow-y-auto scrollbar-thin px-4">
         <div className="space-y-1">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center space-x-2">
@@ -339,6 +347,8 @@ export function EnhancedSidebar({
                   onClick={() => handleSessionClick(session.id)}
                   onArchive={() => archiveSession(session.id)}
                   onDelete={() => deleteSession(session.id)}
+                  showDeleteSuccess={deletedSessionId === session.id}
+                  showArchiveSuccess={archivedSessionId === session.id}
                 />
               ))}
             </div>
@@ -519,13 +529,17 @@ function ChatSessionItem({
   isSelected,
   onClick,
   onArchive,
-  onDelete
+  onDelete,
+  showDeleteSuccess,
+  showArchiveSuccess
 }: {
   session: any;
   isSelected: boolean;
   onClick: () => void;
   onArchive: () => void;
   onDelete: () => void;
+  showDeleteSuccess?: boolean;
+  showArchiveSuccess?: boolean;
 }) {
   const [showActions, setShowActions] = useState(false);
 
@@ -571,7 +585,7 @@ function ChatSessionItem({
 
       {/* Actions Menu */}
       <AnimatePresence>
-        {showActions && (
+        {showActions && !showDeleteSuccess && !showArchiveSuccess && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -600,6 +614,18 @@ function ChatSessionItem({
                 <span>Delete</span>
               </button>
             </div>
+          </motion.div>
+        )}
+
+        {/* Success Feedback */}
+        {(showDeleteSuccess || showArchiveSuccess) && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute right-2 top-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg shadow-lg z-10 px-2 py-1"
+          >
+            <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
           </motion.div>
         )}
       </AnimatePresence>

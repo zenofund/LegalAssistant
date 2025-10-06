@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../ui/Toast';
+import { DynamicLogo } from '../ui/DynamicLogo';
 import { validateEmail } from '../../lib/utils';
 
 interface LoginFormProps {
@@ -74,6 +75,11 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md"
     >
+      {/* Mobile Logo - Only visible on small screens */}
+      <div className="lg:hidden flex justify-center mb-6">
+        <DynamicLogo className="w-32 h-auto object-contain" />
+      </div>
+
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Welcome back</h1>
         <p className="text-gray-600 dark:text-gray-300">Sign in to your easyAI account</p>

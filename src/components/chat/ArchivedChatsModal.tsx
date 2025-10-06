@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageSquare, Search, Trash2, ArchiveRestore, Clock } from 'lucide-react';
+import { MessageSquare, Search, Trash2, ArchiveRestore, Clock, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
@@ -20,6 +21,8 @@ export function ArchivedChatsModal({ isOpen, onClose }: ArchivedChatsModalProps)
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletedSessionId, setDeletedSessionId] = useState<string | null>(null);
+  const [unarchivedSessionId, setUnarchivedSessionId] = useState<string | null>(null);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -61,6 +64,8 @@ export function ArchivedChatsModal({ isOpen, onClose }: ArchivedChatsModalProps)
 
       if (error) throw error;
 
+      setUnarchivedSessionId(sessionId);
+      setTimeout(() => setUnarchivedSessionId(null), 2000);
       showSuccess('Unarchived', 'Conversation restored to chat list');
       await loadArchivedChats();
     } catch (error) {
@@ -84,6 +89,8 @@ export function ArchivedChatsModal({ isOpen, onClose }: ArchivedChatsModalProps)
 
       if (error) throw error;
 
+      setDeletedSessionId(sessionId);
+      setTimeout(() => setDeletedSessionId(null), 2000);
       showSuccess('Deleted', 'Conversation deleted permanently');
       await loadArchivedChats();
     } catch (error) {
@@ -121,7 +128,7 @@ export function ArchivedChatsModal({ isOpen, onClose }: ArchivedChatsModalProps)
         </div>
 
         {/* Sessions List */}
-        <div className="max-h-[60vh] overflow-y-auto space-y-2">
+        <div className="max-h-[60vh] overflow-y-auto scrollbar-thin space-y-2">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -143,7 +150,7 @@ export function ArchivedChatsModal({ isOpen, onClose }: ArchivedChatsModalProps)
               <div
                 key={session.id}
                 onClick={() => handleViewSession(session.id)}
-                className="group p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                className="group p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors relative"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -164,24 +171,38 @@ export function ArchivedChatsModal({ isOpen, onClose }: ArchivedChatsModalProps)
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleUnarchive(session.id, e)}
-                      title="Restore conversation"
-                    >
-                      <ArchiveRestore className="h-4 w-4 text-blue-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleDelete(session.id, e)}
-                      title="Delete permanently"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
+                  <AnimatePresence mode="wait">
+                    {deletedSessionId === session.id || unarchivedSessionId === session.id ? (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        className="flex items-center justify-center w-16 h-8"
+                      >
+                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </motion.div>
+                    ) : (
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleUnarchive(session.id, e)}
+                          title="Restore conversation"
+                        >
+                          <ArchiveRestore className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDelete(session.id, e)}
+                          title="Delete permanently"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             ))
