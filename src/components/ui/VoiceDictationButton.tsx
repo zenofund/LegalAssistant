@@ -40,6 +40,8 @@ export function VoiceDictationButton({
   const streamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSoundTimeRef = useRef<number>(Date.now());
 
   const { showError, showWarning, showSuccess } = useToast();
 
@@ -82,7 +84,13 @@ export function VoiceDictationButton({
     analyserRef.current.getByteFrequencyData(dataArray);
 
     const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-    setAudioLevel(average / 255);
+    const normalizedLevel = average / 255;
+    setAudioLevel(normalizedLevel);
+
+    const VOICE_THRESHOLD = 0.02;
+    if (normalizedLevel > VOICE_THRESHOLD) {
+      lastSoundTimeRef.current = Date.now();
+    }
 
     animationFrameRef.current = requestAnimationFrame(analyzeAudioLevel);
   };
@@ -146,6 +154,7 @@ export function VoiceDictationButton({
       mediaRecorder.start();
       setRecordingState('recording');
       setRecordingDuration(0);
+      lastSoundTimeRef.current = Date.now();
 
       let duration = 0;
       timerRef.current = setInterval(() => {
@@ -153,6 +162,14 @@ export function VoiceDictationButton({
         setRecordingDuration(duration);
 
         if (duration >= planConfig.maxDuration) {
+          stopRecording();
+        }
+      }, 100);
+
+      const SILENCE_THRESHOLD = 2000;
+      silenceTimerRef.current = setInterval(() => {
+        const timeSinceLastSound = Date.now() - lastSoundTimeRef.current;
+        if (timeSinceLastSound >= SILENCE_THRESHOLD) {
           stopRecording();
         }
       }, 100);
@@ -177,6 +194,11 @@ export function VoiceDictationButton({
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
+    }
+
+    if (silenceTimerRef.current) {
+      clearInterval(silenceTimerRef.current);
+      silenceTimerRef.current = null;
     }
 
     if (animationFrameRef.current) {
@@ -270,6 +292,9 @@ export function VoiceDictationButton({
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (silenceTimerRef.current) {
+        clearInterval(silenceTimerRef.current);
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -381,35 +406,37 @@ export function VoiceDictationButton({
         </button>
       </Tooltip>
 
-      {recordingState === 'recording' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium"
-        >
-          <div className="flex items-center space-x-2">
-            <div
-              className="w-2 h-2 rounded-full bg-red-500"
-              style={{
-                opacity: 0.5 + (audioLevel * 0.5)
-              }}
-            />
-            <span>{remainingTime.toFixed(1)}s</span>
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {recordingState === 'recording' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium z-50"
+          >
+            <div className="flex items-center space-x-2">
+              <div
+                className="w-2 h-2 rounded-full bg-red-500"
+                style={{
+                  opacity: 0.5 + (audioLevel * 0.5)
+                }}
+              />
+              <span>{remainingTime.toFixed(1)}s</span>
+            </div>
+          </motion.div>
+        )}
 
-      {recordingState === 'transcribing' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          className="absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium"
-        >
-          Transcribing...
-        </motion.div>
-      )}
+        {recordingState === 'transcribing' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium z-50"
+          >
+            Transcribing...
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

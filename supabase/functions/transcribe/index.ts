@@ -64,7 +64,8 @@ Deno.serve(async (req: Request) => {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profileError || !profile) {
+    if (profileError) {
+      console.error('Profile query error:', profileError);
       return new Response(
         JSON.stringify({ error: 'Failed to load user profile' }),
         {
@@ -74,9 +75,32 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const tier = profile.subscription?.plan?.tier || 'free';
+    if (!profile) {
+      console.error('No profile found for user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'User profile not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    if (tier === 'free') {
+    const subscription = Array.isArray(profile.subscription)
+      ? profile.subscription[0]
+      : profile.subscription;
+
+    const plan = subscription?.plan;
+    const tier = plan?.tier || 'free';
+
+    console.log('User transcription request:', {
+      userId: user.id,
+      tier,
+      hasSubscription: !!subscription,
+      hasPlan: !!plan
+    });
+
+    if (tier === 'free' || !subscription || !plan) {
       return new Response(
         JSON.stringify({ error: 'PLAN_LIMIT: Voice transcription requires a Pro or Enterprise plan.' }),
         {
