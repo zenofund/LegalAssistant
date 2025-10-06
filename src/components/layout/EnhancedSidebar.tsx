@@ -22,7 +22,8 @@ import {
   Zap,
   Scale,
   Infinity,
-  RefreshCw
+  RefreshCw,
+  Edit2
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, trackUsage } from '../../lib/supabase';
@@ -166,6 +167,9 @@ export function EnhancedSidebar({
 
   const [deletedSessionId, setDeletedSessionId] = useState<string | null>(null);
   const [archivedSessionId, setArchivedSessionId] = useState<string | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [renamedSessionId, setRenamedSessionId] = useState<string | null>(null);
 
   const archiveSession = async (sessionId: string) => {
     try {
@@ -194,6 +198,41 @@ export function EnhancedSidebar({
       await loadChatSessions();
     } catch (error) {
       console.error('Error deleting session:', error);
+    }
+  };
+
+  const handleStartRename = (sessionId: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSessionId(sessionId);
+    setEditingTitle(currentTitle || 'New Conversation');
+  };
+
+  const handleSaveRename = async (sessionId: string) => {
+    if (!editingTitle.trim()) return;
+
+    try {
+      await supabase
+        .from('chat_sessions')
+        .update({ title: editingTitle.trim() })
+        .eq('id', sessionId);
+
+      setRenamedSessionId(sessionId);
+      setTimeout(() => setRenamedSessionId(null), 2000);
+      setEditingSessionId(null);
+      setEditingTitle('');
+      await loadChatSessions();
+    } catch (error) {
+      console.error('Error renaming session:', error);
+    }
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveRename(sessionId);
+    } else if (e.key === 'Escape') {
+      setEditingSessionId(null);
+      setEditingTitle('');
     }
   };
 
@@ -347,8 +386,15 @@ export function EnhancedSidebar({
                   onClick={() => handleSessionClick(session.id)}
                   onArchive={() => archiveSession(session.id)}
                   onDelete={() => deleteSession(session.id)}
+                  onRename={(e) => handleStartRename(session.id, session.title, e)}
                   showDeleteSuccess={deletedSessionId === session.id}
                   showArchiveSuccess={archivedSessionId === session.id}
+                  showRenameSuccess={renamedSessionId === session.id}
+                  isEditing={editingSessionId === session.id}
+                  editingTitle={editingTitle}
+                  onEditingTitleChange={setEditingTitle}
+                  onSaveRename={() => handleSaveRename(session.id)}
+                  onRenameKeyDown={(e) => handleRenameKeyDown(e, session.id)}
                 />
               ))}
             </div>
@@ -358,14 +404,14 @@ export function EnhancedSidebar({
 
       {/* Quick Actions */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+        <div className="space-y-1">
+          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
             Tools
           </h3>
           <Button
             variant="ghost"
             onClick={onShowHistory}
-            className="w-full justify-start text-sm"
+            className="w-full justify-start text-sm py-2"
           >
             <History className="h-4 w-4 mr-3" />
             Chat History
@@ -373,7 +419,7 @@ export function EnhancedSidebar({
           <Button
             variant="ghost"
             onClick={onShowArchived}
-            className="w-full justify-start text-sm"
+            className="w-full justify-start text-sm py-2"
           >
             <Archive className="h-4 w-4 mr-3" />
             Archived Chats
@@ -530,16 +576,30 @@ function ChatSessionItem({
   onClick,
   onArchive,
   onDelete,
+  onRename,
   showDeleteSuccess,
-  showArchiveSuccess
+  showArchiveSuccess,
+  showRenameSuccess,
+  isEditing,
+  editingTitle,
+  onEditingTitleChange,
+  onSaveRename,
+  onRenameKeyDown
 }: {
   session: any;
   isSelected: boolean;
   onClick: () => void;
   onArchive: () => void;
   onDelete: () => void;
+  onRename: (e: React.MouseEvent) => void;
   showDeleteSuccess?: boolean;
   showArchiveSuccess?: boolean;
+  showRenameSuccess?: boolean;
+  isEditing?: boolean;
+  editingTitle?: string;
+  onEditingTitleChange?: (title: string) => void;
+  onSaveRename?: () => void;
+  onRenameKeyDown?: (e: React.KeyboardEvent) => void;
 }) {
   const [showActions, setShowActions] = useState(false);
 
@@ -554,7 +614,7 @@ function ChatSessionItem({
       onMouseLeave={() => setShowActions(false)}
     >
       <button
-        onClick={onClick}
+        onClick={isEditing ? undefined : onClick}
         className="w-full text-left px-3 py-2 focus:outline-none"
       >
         <div className="flex items-start space-x-2">
@@ -562,11 +622,33 @@ function ChatSessionItem({
             isSelected ? 'bg-blue-500' : 'bg-gray-300'
           }`} />
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium truncate ${
-              isSelected ? 'text-blue-900 dark:text-blue-200' : 'text-gray-900 dark:text-gray-100'
-            }`}>
-              {session.title || 'New Conversation'}
-            </p>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editingTitle}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onEditingTitleChange?.(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  onRenameKeyDown?.(e);
+                }}
+                onBlur={(e) => {
+                  e.stopPropagation();
+                  onSaveRename?.();
+                }}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+                className="w-full text-sm font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <p className={`text-sm font-medium truncate ${
+                isSelected ? 'text-blue-900 dark:text-blue-200' : 'text-gray-900 dark:text-gray-100'
+              }`}>
+                {session.title || 'New Conversation'}
+              </p>
+            )}
             <div className="flex items-center justify-between mt-0.5">
               <p className={`text-xs truncate ${
                 isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400'
@@ -585,7 +667,7 @@ function ChatSessionItem({
 
       {/* Actions Menu */}
       <AnimatePresence>
-        {showActions && !showDeleteSuccess && !showArchiveSuccess && (
+        {showActions && !showDeleteSuccess && !showArchiveSuccess && !showRenameSuccess && !isEditing && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -593,6 +675,13 @@ function ChatSessionItem({
             className="absolute right-2 top-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10"
           >
             <div className="py-1">
+              <button
+                onClick={onRename}
+                className="w-full text-left px-3 py-1 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+              >
+                <Edit2 className="h-3 w-3" />
+                <span>Rename</span>
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -618,7 +707,7 @@ function ChatSessionItem({
         )}
 
         {/* Success Feedback */}
-        {(showDeleteSuccess || showArchiveSuccess) && (
+        {(showDeleteSuccess || showArchiveSuccess || showRenameSuccess) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

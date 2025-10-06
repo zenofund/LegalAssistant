@@ -25,7 +25,8 @@ import {
   Upload,
   ChevronUp,
   ArrowUp,
-  Mic
+  Mic,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
@@ -58,6 +59,7 @@ export function EnhancedChatInterface() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharingMessage, setSharingMessage] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -74,6 +76,20 @@ export function EnhancedChatInterface() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom && messages.length > 0);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [messages.length]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -399,7 +415,7 @@ export function EnhancedChatInterface() {
       style={{ height: `${viewportHeight}px` }}
     >
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-conditional">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-conditional relative">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {messages.length === 0 ? (
             <WelcomeScreen onSuggestionClick={setMessage} />
@@ -425,6 +441,22 @@ export function EnhancedChatInterface() {
           )}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Scroll to Bottom Button */}
+        <AnimatePresence>
+          {showScrollButton && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              onClick={() => scrollToBottom('smooth')}
+              className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-10"
+              title="Scroll to bottom"
+            >
+              <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Input Area */}
@@ -441,7 +473,7 @@ export function EnhancedChatInterface() {
                 onFocus={handleTextareaFocus}
                 onBlur={handleTextareaBlur}
                 placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
-                className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors touch-action-manipulation"
+                className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors touch-action-manipulation scrollbar-conditional"
                 rows={1}
                 disabled={isLoading}
               />
