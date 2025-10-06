@@ -428,8 +428,8 @@ export function EnhancedChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 bg-transparent mb-[50px]">
+        <div className="max-w-4xl mx-auto px-4 py-4 bg-white dark:bg-gray-800 rounded-t-2xl">
           
           <form onSubmit={handleSubmit} className="relative">
             <div className="relative">
@@ -533,14 +533,16 @@ export function EnhancedChatInterface() {
 
                 {/* Download Button */}
                 {messages.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={exportChat}
-                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                    title="Export Chat"
-                  >
-                    <Download className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                  </button>
+                  <Tooltip content="Export Chat" position="top">
+                    <button
+                      type="button"
+                      onClick={exportChat}
+                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                      aria-label="Export Chat"
+                    >
+                      <Download className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                    </button>
+                  </Tooltip>
                 )}
 
                 {/* Send/Voice Button - Dynamic with themed background */}

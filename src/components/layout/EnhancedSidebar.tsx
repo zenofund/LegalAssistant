@@ -346,38 +346,6 @@ export function EnhancedSidebar({
         </div>
       </div>
 
-      {/* Pro Tools Section */}
-      {hasProFeatures && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="space-y-2">
-            <h3 className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3 flex items-center">
-              <Zap className="h-3 w-3 mr-1" />
-              Pro Tools
-            </h3>
-            {onShowCaseSummarizer && (
-              <Button
-                variant="ghost"
-                onClick={onShowCaseSummarizer}
-                className="w-full justify-start text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              >
-                <Scale className="h-4 w-4 mr-3" />
-                Case Summarizer
-              </Button>
-            )}
-            {onShowCaseBriefGenerator && (
-              <Button
-                variant="ghost"
-                onClick={onShowCaseBriefGenerator}
-                className="w-full justify-start text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              >
-                <BookOpen className="h-4 w-4 mr-3" />
-                Brief Generator
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Quick Actions */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="space-y-2">
@@ -480,12 +448,12 @@ export function EnhancedSidebar({
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:w-80 lg:flex-col lg:fixed lg:inset-y-0 lg:z-50">
+      {/* Desktop Sidebar - Always visible on large screens */}
+      <div className="hidden lg:block lg:w-80 lg:fixed lg:inset-y-0 lg:z-50">
         {sidebarContent}
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - Only visible when toggled */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -573,10 +541,10 @@ function ChatSessionItem({
     >
       <button
         onClick={onClick}
-        className="w-full text-left px-3 py-3 focus:outline-none"
+        className="w-full text-left px-3 py-2 focus:outline-none"
       >
-        <div className="flex items-start space-x-3">
-          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+        <div className="flex items-start space-x-2">
+          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
             isSelected ? 'bg-blue-500' : 'bg-gray-300'
           }`} />
           <div className="flex-1 min-w-0">
@@ -585,7 +553,7 @@ function ChatSessionItem({
             }`}>
               {session.title || 'New Conversation'}
             </p>
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between mt-0.5">
               <p className={`text-xs truncate ${
                 isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400'
               }`}>
