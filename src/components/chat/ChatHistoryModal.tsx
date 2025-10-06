@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageSquare, Clock, Search, Trash2, Calendar, Check } from 'lucide-react';
+import { MessageSquare, Clock, Search, Trash2, Calendar, Check, Edit2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
@@ -23,6 +23,9 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [deletedSessionId, setDeletedSessionId] = useState<string | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [renamedSessionId, setRenamedSessionId] = useState<string | null>(null);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -112,6 +115,56 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
     }
   };
 
+  const handleStartRename = (sessionId: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSessionId(sessionId);
+    setEditingTitle(currentTitle || 'New Conversation');
+  };
+
+  const handleCancelRename = () => {
+    setEditingSessionId(null);
+    setEditingTitle('');
+  };
+
+  const handleSaveRename = async (sessionId: string, e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!editingTitle.trim()) {
+      showError('Invalid Title', 'Title cannot be empty');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chat_sessions')
+        .update({ title: editingTitle.trim() })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      setRenamedSessionId(sessionId);
+      setTimeout(() => setRenamedSessionId(null), 2000);
+      setEditingSessionId(null);
+      setEditingTitle('');
+      await loadChatHistory();
+    } catch (error) {
+      console.error('Error renaming session:', error);
+      showError('Rename Failed', 'Failed to rename conversation');
+    }
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveRename(sessionId);
+    } else if (e.key === 'Escape') {
+      handleCancelRename();
+    }
+  };
+
   const filteredSessions = sessions.filter((session) =>
     session.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -196,16 +249,34 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
                   {groupSessions.map((session: any) => (
                     <div
                       key={session.id}
-                      onClick={() => handleSessionClick(session.id)}
+                      onClick={() => editingSessionId !== session.id && handleSessionClick(session.id)}
                       className="group p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors relative"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
                             <MessageSquare className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                              {session.title || 'New Conversation'}
-                            </h4>
+                            {editingSessionId === session.id ? (
+                              <form
+                                onSubmit={(e) => handleSaveRename(session.id, e)}
+                                className="flex-1 flex items-center space-x-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="text"
+                                  value={editingTitle}
+                                  onChange={(e) => setEditingTitle(e.target.value)}
+                                  onKeyDown={(e) => handleRenameKeyDown(e, session.id)}
+                                  onBlur={() => handleSaveRename(session.id)}
+                                  autoFocus
+                                  className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </form>
+                            ) : (
+                              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                {session.title || 'New Conversation'}
+                              </h4>
+                            )}
                           </div>
                           <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                             <span className="flex items-center space-x-1">
@@ -219,9 +290,19 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
                           </div>
                         </div>
                         <AnimatePresence mode="wait">
-                          {deletedSessionId === session.id ? (
+                          {renamedSessionId === session.id ? (
                             <motion.div
-                              key="check"
+                              key="renamed"
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              className="flex items-center justify-center w-8 h-8"
+                            >
+                              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </motion.div>
+                          ) : deletedSessionId === session.id ? (
+                            <motion.div
+                              key="deleted"
                               initial={{ scale: 0, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               exit={{ scale: 0, opacity: 0 }}
@@ -230,14 +311,24 @@ export function ChatHistoryModal({ isOpen, onClose }: ChatHistoryModalProps) {
                               <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                             </motion.div>
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => handleDeleteSession(session.id, e)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleStartRename(session.id, session.title, e)}
+                                title="Rename conversation"
+                              >
+                                <Edit2 className="h-4 w-4 text-blue-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteSession(session.id, e)}
+                                title="Delete conversation"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           )}
                         </AnimatePresence>
                       </div>

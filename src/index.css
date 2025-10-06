@@ -100,4 +100,41 @@
   .scrollbar-auto:not(:hover)::-webkit-scrollbar-thumb {
     background: transparent;
   }
+
+  /* Conditional scrollbar with transparent appearance - only visible when overflow exists */
+  .scrollbar-conditional {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-conditional:hover {
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .dark .scrollbar-conditional:hover {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  }
+
+  .scrollbar-conditional::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-conditional::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-conditional::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  .scrollbar-conditional:hover::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+  }
+
+  .dark .scrollbar-conditional:hover::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.5);
+  }
 }
