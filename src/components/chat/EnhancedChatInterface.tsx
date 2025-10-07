@@ -65,6 +65,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
   const [sharingMessage, setSharingMessage] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [scrollButtonPosition, setScrollButtonPosition] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -90,9 +91,18 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
       const { scrollTop, scrollHeight, clientHeight } = container;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
       setShowScrollButton(!isNearBottom && messages.length > 0);
+
+      // Calculate dynamic position for scroll button
+      if (!isNearBottom && messages.length > 0) {
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        const maxVisibleHeight = clientHeight - 100; // Keep button 100px from top
+        const buttonOffset = Math.min(distanceFromBottom / 2, maxVisibleHeight);
+        setScrollButtonPosition(buttonOffset);
+      }
     };
 
     container.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial position calculation
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages.length]);
 
@@ -447,15 +457,24 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Scroll to Bottom Button */}
+        {/* Scroll to Bottom Button - Dynamic Position */}
         <AnimatePresence>
           {showScrollButton && (
             <motion.button
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                bottom: `${Math.max(scrollButtonPosition, 24)}px`
+              }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                opacity: { duration: 0.2 },
+                scale: { duration: 0.2 },
+                bottom: { duration: 0.15, ease: 'easeOut' }
+              }}
               onClick={() => scrollToBottom('smooth')}
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-10"
+              className="absolute left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-10"
               title="Scroll to bottom"
             >
               <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />

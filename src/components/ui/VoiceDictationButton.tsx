@@ -336,7 +336,7 @@ export function VoiceDictationButton({
 
   return (
     <div className="relative">
-      <Tooltip content={getTooltipText()} position="top">
+      <Tooltip content={getTooltipText()} position="left">
         <button
           type="button"
           onClick={handleClick}
@@ -423,10 +423,10 @@ export function VoiceDictationButton({
       <AnimatePresence>
         {recordingState === 'recording' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium z-50"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="absolute bottom-full mb-2 right-0 bg-gray-900 dark:bg-gray-800 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium z-50"
           >
             <div className="flex items-center space-x-2">
               <div
@@ -437,17 +437,25 @@ export function VoiceDictationButton({
               />
               <span>{remainingTime.toFixed(1)}s</span>
             </div>
+            {/* Arrow pointing down-right */}
+            <div className="absolute top-full right-2 -mt-1">
+              <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
+            </div>
           </motion.div>
         )}
 
         {recordingState === 'transcribing' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium z-50"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="absolute bottom-full mb-2 right-0 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap text-xs font-medium z-50"
           >
             Transcribing...
+            {/* Arrow pointing down-right */}
+            <div className="absolute top-full right-2 -mt-1">
+              <div className="border-4 border-transparent border-t-blue-600" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

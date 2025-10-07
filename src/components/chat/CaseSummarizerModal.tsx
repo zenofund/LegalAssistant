@@ -193,7 +193,7 @@ export function CaseSummarizerModal({ isOpen, onClose }: CaseSummarizerModalProp
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Case Summarizer" size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Case Summarizer" maxWidth="2xl">
       <div className="space-y-6">
         {!summary ? (
           <>

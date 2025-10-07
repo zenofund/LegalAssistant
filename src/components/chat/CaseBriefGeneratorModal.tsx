@@ -237,7 +237,7 @@ export function CaseBriefGeneratorModal({ isOpen, onClose }: CaseBriefGeneratorM
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Case Brief Generator" size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Case Brief Generator" maxWidth="2xl">
       <div className="space-y-6">
         {!brief ? (
           <>

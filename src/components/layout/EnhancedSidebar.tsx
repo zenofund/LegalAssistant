@@ -500,6 +500,11 @@ export function EnhancedSidebar({
               initial={{ x: -320 }}
               animate={{ x: 0 }}
               exit={{ x: -320 }}
+              transition={{
+                type: "tween",
+                ease: [0.25, 0.1, 0.25, 1],
+                duration: 0.3
+              }}
               className="lg:hidden fixed inset-y-0 left-0 w-80 z-50"
             >
               {sidebarContent}
