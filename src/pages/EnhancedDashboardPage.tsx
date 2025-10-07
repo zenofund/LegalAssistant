@@ -244,7 +244,7 @@ export function EnhancedDashboardPage() {
               </div>
             }
           >
-            <EnhancedChatInterface />
+            <EnhancedChatInterface onShowSubscription={() => setShowSubscription(true)} />
           </ErrorBoundary>
         </main>
       </div>

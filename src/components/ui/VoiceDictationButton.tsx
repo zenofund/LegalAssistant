@@ -96,6 +96,14 @@ export function VoiceDictationButton({
   };
 
   const startRecording = async () => {
+    if (!userProfile) {
+      showError(
+        'Profile Not Loaded',
+        'Please wait for your profile to load before using voice dictation.'
+      );
+      return;
+    }
+
     if (!planConfig.canRecord) {
       showWarning(
         'Upgrade Required',
@@ -215,6 +223,10 @@ export function VoiceDictationButton({
     setRecordingState('transcribing');
 
     try {
+      if (!userProfile) {
+        throw new Error('Failed to load user profile');
+      }
+
       // Get the current authenticated user's session token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
@@ -257,7 +269,9 @@ export function VoiceDictationButton({
     } catch (error: any) {
       console.error('Transcription error:', error);
 
-      if (error.message.includes('Authentication required')) {
+      if (error.message.includes('Failed to load user profile')) {
+        showError('Profile Error', 'Failed to load user profile. Please refresh the page and try again.');
+      } else if (error.message.includes('Authentication required')) {
         showError('Authentication Error', 'Please sign in again to use voice dictation.');
       } else if (error.message.includes('PLAN_LIMIT')) {
         showError('Upgrade Required', 'Voice transcription requires a Pro or Enterprise plan.');

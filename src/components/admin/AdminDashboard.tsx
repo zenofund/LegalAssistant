@@ -448,16 +448,19 @@ function SubscriptionsTab() {
         .select(`
           *,
           user:users(name, email),
-          plan:plans(name, price, tier)
+          plan:plans(name, price, tier, billing_cycle)
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setSubscriptions(data || []);
+      if (error) {
+        console.error('Error loading subscriptions:', error);
+        setSubscriptions([]);
+      } else {
+        setSubscriptions(data || []);
+      }
     } catch (error) {
       console.error('Error loading subscriptions:', error);
-      // This is where the Error Boundary will catch the error if you re-throw it
-      throw error;
+      setSubscriptions([]);
     } finally {
       setLoading(false);
     }
@@ -537,17 +540,31 @@ function SubscriptionsTab() {
                       </td>
                     </tr>
                   ))
+                ) : subscriptions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center space-y-2">
+                        <CreditCard className="h-12 w-12 text-gray-400" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          No subscriptions yet
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Active subscriptions will appear here
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
                   subscriptions.map((sub) => (
                     <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sub.user?.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{sub.user?.email}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sub.user?.name || 'Unknown'}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{sub.user?.email || 'N/A'}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-900 dark:text-gray-100">{sub.plan?.name}</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">{sub.plan?.name || 'Unknown Plan'}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -561,7 +578,7 @@ function SubscriptionsTab() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                        {formatCurrency(sub.plan?.price || 0)}
+                        {sub.plan?.price === 0 ? 'Free' : formatCurrency(sub.plan?.price || 0)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {sub.start_date ? formatDate(sub.start_date) : 'N/A'}

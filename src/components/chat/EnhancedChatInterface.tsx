@@ -44,7 +44,11 @@ import { formatDate, cn, hasPremiumAccess } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
-export function EnhancedChatInterface() {
+interface EnhancedChatInterfaceProps {
+  onShowSubscription?: () => void;
+}
+
+export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterfaceProps = {}) {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCitationGenerator, setShowCitationGenerator] = useState(false);

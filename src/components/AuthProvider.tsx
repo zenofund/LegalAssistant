@@ -91,6 +91,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (userError) {
         console.error('❌ AuthProvider: Error fetching user:', userError);
+        console.error('❌ AuthProvider: Error code:', userError.code);
+        console.error('❌ AuthProvider: Error details:', userError.details);
+
+        if (userError.code === '500' || userError.message?.includes('500')) {
+          console.warn('⚠️ AuthProvider: Server error detected, will retry');
+        }
         throw userError;
       }
 
@@ -131,11 +137,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (subscriptionError && subscriptionError.code !== 'PGRST116') {
         console.error('⚠️ AuthProvider: Error fetching subscription:', subscriptionError);
+        console.error('⚠️ AuthProvider: Subscription error code:', subscriptionError.code);
+
+        if (subscriptionError.code === '500' || subscriptionError.message?.includes('500')) {
+          console.warn('⚠️ AuthProvider: Subscription server error, user will have default plan');
+        }
       }
 
       const userProfile = {
         ...userData,
-        subscription: subscriptionData ? {
+        subscription: subscriptionData && subscriptionData.plans ? {
           id: subscriptionData.id,
           plan_id: subscriptionData.plan_id,
           status: subscriptionData.status,
@@ -144,13 +155,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           plan: subscriptionData.plans,
         } : undefined,
       };
-
-      const error = null;
-
-      if (error) {
-        console.error('❌ AuthProvider: Error fetching profile:', error);
-        throw error;
-      }
 
       if (!userProfile) {
         console.warn('⚠️ AuthProvider: No profile found for user:', userId);
@@ -161,17 +165,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setCachedProfile(userId, userProfile);
       return userProfile;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`💥 AuthProvider: Profile fetch attempt ${attempt + 1} failed:`, error);
+
+      const isServerError = error?.code === '500' ||
+                           error?.message?.includes('500') ||
+                           error?.message?.includes('server error') ||
+                           error?.statusCode === 500;
 
       if (!getNetworkStatus()) {
         console.log('📡 AuthProvider: Network offline, stopping retries');
         throw new Error('Network unavailable');
       }
 
-      if (attempt < maxAttempts - 1) {
+      if (attempt < maxAttempts - 1 && (isServerError || !error.code)) {
         const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-        console.log(`⏳ AuthProvider: Retrying in ${delay}ms...`);
+        console.log(`⏳ AuthProvider: Retrying in ${delay}ms... (Server error: ${isServerError})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return fetchProfileWithRetry(userId, attempt + 1, false, mountedRef);
       }

@@ -39,10 +39,17 @@ export function UsersTab() {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (error) {
+        console.error('Error loading users:', error);
+        showError('Failed to Load Users', 'Unable to load users. Please try refreshing the page.');
+        setUsers([]);
+      } else {
+        setUsers(data || []);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
+      showError('Failed to Load Users', 'Unable to load users. Please try refreshing the page.');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -89,8 +96,8 @@ export function UsersTab() {
   };
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -166,6 +173,20 @@ export function UsersTab() {
                       </td>
                     </tr>
                   ))
+                ) : filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center space-y-2">
+                        <Users className="h-12 w-12 text-gray-400" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {searchTerm ? 'No users found' : 'No users yet'}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {searchTerm ? 'Try adjusting your search' : 'Users will appear here once they sign up'}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -193,7 +214,9 @@ export function UsersTab() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm text-gray-900 dark:text-gray-100">
-                          {user.subscriptions?.[0]?.plan?.name || 'Free Plan'}
+                          {user.subscriptions && user.subscriptions.length > 0 && user.subscriptions[0].plan
+                            ? user.subscriptions[0].plan.name
+                            : 'Free Plan'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -272,10 +295,14 @@ export function UsersTab() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Subscription</label>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-gray-900">
-                  {selectedUser.subscriptions?.[0]?.plan?.name || 'Free Plan'}
+                  {selectedUser.subscriptions && selectedUser.subscriptions.length > 0 && selectedUser.subscriptions[0].plan
+                    ? selectedUser.subscriptions[0].plan.name
+                    : 'Free Plan'}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Status: {selectedUser.subscriptions?.[0]?.status || 'Free'}
+                  Status: {selectedUser.subscriptions && selectedUser.subscriptions.length > 0
+                    ? selectedUser.subscriptions[0].status || 'Active'
+                    : 'Free'}
                 </p>
               </div>
             </div>
