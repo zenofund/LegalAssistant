@@ -296,7 +296,6 @@ ${ragContext ? '**IMPORTANT:** You have access to relevant legal documents below
         body: JSON.stringify({
           model: modelToUse,
           messages: messages,
-          temperature: 0.7,
           max_tokens: 2000,
         }),
       });
@@ -325,7 +324,6 @@ ${ragContext ? '**IMPORTANT:** You have access to relevant legal documents below
             body: JSON.stringify({
               model: 'gpt-4o-mini',
               messages: messages,
-              temperature: 0.7,
               max_tokens: 2000,
             }),
           });

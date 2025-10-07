@@ -293,7 +293,6 @@ Be thorough, accurate, and ensure all legal principles are clearly identified.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Analyze this legal case:\n\n${caseTextToAnalyze}` }
         ],
-        temperature: 0.3,
         max_tokens: 3000,
         response_format: { type: 'json_object' }
       }),
