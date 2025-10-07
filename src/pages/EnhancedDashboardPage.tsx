@@ -28,6 +28,7 @@ export function EnhancedDashboardPage() {
   const [showCaseBriefGenerator, setShowCaseBriefGenerator] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'verifying' | 'success' | 'failed' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
+  const [viewMode, setViewMode] = useState<'chat' | 'admin'>('chat');
   const { profile, refreshProfile } = useAuth();
 
   useEffect(() => {
@@ -121,6 +122,15 @@ export function EnhancedDashboardPage() {
   // Check if user has admin or super_admin role
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
 
+  // If in admin mode and user is admin, show admin dashboard
+  if (viewMode === 'admin' && isAdmin) {
+    return (
+      <div className="h-screen flex bg-gray-50 dark:bg-dark-primary">
+        <AdminDashboard onClose={() => setViewMode('chat')} />
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-dark-primary transition-colors duration-200">
       {paymentStatus && (
@@ -189,7 +199,7 @@ export function EnhancedDashboardPage() {
           onShowUpload={() => setShowUpload(true)}
           onShowSettings={() => setShowSettings(true)}
           onShowSubscription={() => setShowSubscription(true)}
-          onShowAdmin={() => setShowAdmin(true)}
+          onShowAdmin={() => setViewMode('admin')}
           onShowHistory={() => setShowHistory(true)}
           onShowArchived={() => setShowArchived(true)}
           onShowCaseSummarizer={() => setShowCaseSummarizer(true)}
@@ -274,13 +284,6 @@ export function EnhancedDashboardPage() {
         isOpen={showCaseBriefGenerator}
         onClose={() => setShowCaseBriefGenerator(false)}
       />
-
-      {isAdmin && (
-        <AdminDashboard
-          isOpen={showAdmin}
-          onClose={() => setShowAdmin(false)}
-        />
-      )}
     </div>
   );
 }

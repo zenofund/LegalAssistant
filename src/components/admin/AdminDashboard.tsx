@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download, ChevronDown } from 'lucide-react';
+import { Users, FileText, CreditCard, MessageSquare, TrendingUp, Settings, Bell, Plus, CreditCard as Edit, Trash2, Eye, Download, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase, hasPermission } from '../../lib/supabase';
 import { formatCurrency, formatDate, formatRelativeTime } from '../../lib/utils';
@@ -8,9 +8,9 @@ import { SubscriptionDetailsModal } from './SubscriptionDetailsModal';
 import { UsersTab } from './UsersTab';
 import { DocumentsTab } from './DocumentsTab';
 import { Card, CardHeader, CardContent } from '../ui/Card';
-import { Button } from '../ui/Button'; // Assuming Button component exists
-import { Modal } from '../ui/Modal'; // Assuming Modal component exists
-import { Input } from '../ui/Input'; // Assuming Input component exists
+import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
+import { Input } from '../ui/Input';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 interface AdminStats {
@@ -22,7 +22,11 @@ interface AdminStats {
   monthlyGrowth: number;
 }
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  onClose?: () => void;
+}
+
+export function AdminDashboard({ onClose }: AdminDashboardProps) {
   const { profile } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'documents' | 'subscriptions' | 'notifications'>('overview');
@@ -88,6 +92,17 @@ export function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
+              {onClose && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="flex items-center space-x-2"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  <span>Back to Chat</span>
+                </Button>
+              )}
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Settings className="h-5 w-5 text-white" />
               </div>
@@ -119,16 +134,18 @@ export function AdminDashboard() {
                       <Settings className="h-4 w-4" />
                       <span>Admin Settings</span>
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        window.location.href = '/';
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Chat Dashboard</span>
-                    </button>
+                    {onClose && (
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onClose();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <span>Chat Dashboard</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

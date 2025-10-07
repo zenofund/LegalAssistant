@@ -80,7 +80,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const profileQuery = supabase
         .from('users')
-        .select('*')
+        .select(`
+          *,
+          subscription:subscriptions!subscription_id (
+            id,
+            plan_id,
+            status,
+            start_date,
+            end_date,
+            plan:plans (
+              id,
+              name,
+              tier,
+              price,
+              max_documents,
+              max_chats_per_day,
+              internet_search,
+              ai_drafting,
+              collaboration,
+              ai_model
+            )
+          )
+        `)
         .eq('id', userId)
         .maybeSingle();
 

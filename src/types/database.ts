@@ -382,4 +382,13 @@ export interface Plan {
   ai_model: string;
 }
 
-export type UserProfile = Database['public']['Tables']['users']['Row'];
+export type UserProfile = Database['public']['Tables']['users']['Row'] & {
+  subscription?: {
+    id: string;
+    plan_id: string;
+    status: 'active' | 'cancelled' | 'expired' | 'pending';
+    start_date: string;
+    end_date: string | null;
+    plan: Plan;
+  };
+};
