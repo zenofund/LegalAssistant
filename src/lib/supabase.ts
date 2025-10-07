@@ -88,12 +88,13 @@ export async function getCurrentUser() {
       .from('users')
       .select(`
         *,
-        subscriptions (
+        subscriptions!subscriptions_user_id_fkey (
           *,
           plans (*)
         )
       `)
       .eq('id', user.id)
+      .eq('subscriptions.status', 'active')
       .maybeSingle();
     console.log('🔍 getCurrentUser: Profile query completed');
     profile = profileResult.data;

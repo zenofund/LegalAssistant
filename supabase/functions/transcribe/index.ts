@@ -56,12 +56,13 @@ Deno.serve(async (req: Request) => {
       .from('users')
       .select(`
         *,
-        subscription:subscriptions (
+        subscription:subscriptions!subscriptions_user_id_fkey (
           *,
           plan:plans (*)
         )
       `)
       .eq('id', user.id)
+      .eq('subscriptions.status', 'active')
       .maybeSingle();
 
     if (profileError) {

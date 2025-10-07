@@ -96,7 +96,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       .from('users')
       .select(`
         *,
-        subscription:subscriptions (
+        subscription:subscriptions!subscriptions_user_id_fkey (
           *,
           plan:plans (*)
         )

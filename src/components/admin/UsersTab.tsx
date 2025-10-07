@@ -32,11 +32,12 @@ export function UsersTab() {
         .from('users')
         .select(`
           *,
-          subscriptions (
+          subscriptions!subscriptions_user_id_fkey (
             *,
             plan:plans (*)
           )
         `)
+        .eq('subscriptions.status', 'active')
         .order('created_at', { ascending: false });
 
       if (error) {
