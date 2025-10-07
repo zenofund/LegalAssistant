@@ -105,12 +105,13 @@ Deno.serve(async (req: Request) => {
 
 async function handleChargeSuccess(supabase: any, data: any) {
   try {
+    console.log('Processing charge success webhook for reference:', data.reference);
+
     // Update transaction status
     const { error: transactionError } = await supabase
       .from('transactions')
       .update({
         status: 'success',
-        paystack_tx_ref: data.reference,
         payment_method: data.channel,
         metadata: {
           gateway_response: data.gateway_response,
@@ -121,36 +122,135 @@ async function handleChargeSuccess(supabase: any, data: any) {
       .eq('paystack_tx_ref', data.reference);
 
     if (transactionError) {
+      console.error('Error updating transaction:', transactionError);
       throw transactionError;
     }
 
-    // Get transaction details
+    // Get transaction details with metadata
     const { data: transaction, error: fetchError } = await supabase
       .from('transactions')
-      .select('*, subscriptions(*)')
+      .select('*')
       .eq('paystack_tx_ref', data.reference)
-      .single();
+      .maybeSingle();
 
-    if (fetchError || !transaction) {
+    if (fetchError) {
+      console.error('Error fetching transaction:', fetchError);
+      throw fetchError;
+    }
+
+    if (!transaction) {
+      console.error('Transaction not found for reference:', data.reference);
       throw new Error('Transaction not found');
     }
 
-    // Activate subscription
-    if (transaction.subscription_id) {
-      const { error: subscriptionError } = await supabase
-        .from('subscriptions')
-        .update({
-          status: 'active',
-          paystack_subscription_code: data.subscription?.subscription_code,
-          paystack_customer_code: data.customer?.customer_code
-        })
-        .eq('id', transaction.subscription_id);
+    console.log('Transaction found:', transaction.id, 'User ID:', transaction.user_id);
 
-      if (subscriptionError) {
-        throw subscriptionError;
+    // Get plan from transaction metadata
+    const planId = transaction.metadata?.plan_id;
+
+    if (planId) {
+      console.log('Plan ID from metadata:', planId);
+
+      const { data: plan, error: planError } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('id', planId)
+        .maybeSingle();
+
+      if (planError) {
+        console.error('Error fetching plan:', planError);
+        throw planError;
+      }
+
+      if (plan) {
+        console.log('Plan found:', plan.name, 'Tier:', plan.tier);
+
+        const startDate = new Date().toISOString();
+        let endDate = null;
+
+        if (plan.billing_cycle === 'monthly') {
+          endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        } else if (plan.billing_cycle === 'yearly') {
+          endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        // Check for existing active subscription
+        const { data: existingSubscription, error: subFetchError } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', transaction.user_id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subFetchError) {
+          console.error('Error fetching existing subscription:', subFetchError);
+          throw subFetchError;
+        }
+
+        let subscriptionId = null;
+
+        if (existingSubscription) {
+          console.log('Updating existing subscription:', existingSubscription.id);
+
+          const { data: updatedSub, error: updateError } = await supabase
+            .from('subscriptions')
+            .update({
+              plan_id: plan.id,
+              status: 'active',
+              start_date: startDate,
+              end_date: endDate,
+              paystack_subscription_code: data.subscription?.subscription_code,
+              paystack_customer_code: data.customer?.customer_code,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingSubscription.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error('Error updating subscription:', updateError);
+            throw updateError;
+          }
+
+          subscriptionId = updatedSub.id;
+          console.log('Subscription updated successfully');
+        } else {
+          console.log('Creating new subscription');
+
+          const { data: newSub, error: insertError } = await supabase
+            .from('subscriptions')
+            .insert({
+              user_id: transaction.user_id,
+              plan_id: plan.id,
+              status: 'active',
+              start_date: startDate,
+              end_date: endDate,
+              paystack_subscription_code: data.subscription?.subscription_code,
+              paystack_customer_code: data.customer?.customer_code
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Error creating subscription:', insertError);
+            throw insertError;
+          }
+
+          subscriptionId = newSub.id;
+          console.log('Subscription created successfully:', subscriptionId);
+        }
+
+        // Update transaction with subscription_id
+        if (subscriptionId) {
+          await supabase
+            .from('transactions')
+            .update({ subscription_id: subscriptionId })
+            .eq('id', transaction.id);
+        }
       }
     }
 
+    console.log('Charge success processed successfully');
   } catch (error) {
     console.error('Error handling charge success:', error);
     throw error;

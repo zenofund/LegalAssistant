@@ -146,42 +146,96 @@ Deno.serve(async (req: Request) => {
     }
 
     const planId = transaction.metadata?.plan_id;
+    let activatedSubscriptionId = null;
+    let activatedPlan = null;
+
     if (planId) {
-      const { data: plan } = await supabase
+      const { data: plan, error: planError } = await supabase
         .from('plans')
         .select('*')
         .eq('id', planId)
         .maybeSingle();
 
+      if (planError) {
+        console.error('Error fetching plan:', planError);
+        throw planError;
+      }
+
       if (plan) {
-        const { data: existingSubscription } = await supabase
+        activatedPlan = plan;
+        const startDate = new Date().toISOString();
+        let endDate = null;
+
+        if (plan.billing_cycle === 'monthly') {
+          endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        } else if (plan.billing_cycle === 'yearly') {
+          endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        const { data: existingSubscription, error: subFetchError } = await supabase
           .from('subscriptions')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'active')
           .maybeSingle();
 
+        if (subFetchError) {
+          console.error('Error fetching subscription:', subFetchError);
+          throw subFetchError;
+        }
+
         if (existingSubscription) {
-          await supabase
+          console.log('Updating existing subscription:', existingSubscription.id);
+
+          const { data: updatedSub, error: updateSubError } = await supabase
             .from('subscriptions')
             .update({
               plan_id: plan.id,
               status: 'active',
-              start_date: new Date().toISOString(),
-              end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              start_date: startDate,
+              end_date: endDate,
+              updated_at: new Date().toISOString()
             })
-            .eq('id', existingSubscription.id);
+            .eq('id', existingSubscription.id)
+            .select()
+            .single();
+
+          if (updateSubError) {
+            console.error('Error updating subscription:', updateSubError);
+            throw updateSubError;
+          }
+
+          activatedSubscriptionId = updatedSub.id;
+          console.log('Subscription updated successfully:', activatedSubscriptionId);
         } else {
-          await supabase
+          console.log('Creating new subscription for user:', user.id);
+
+          const { data: newSub, error: insertSubError } = await supabase
             .from('subscriptions')
             .insert({
               user_id: user.id,
               plan_id: plan.id,
               status: 'active',
-              start_date: new Date().toISOString(),
-              end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            });
+              start_date: startDate,
+              end_date: endDate,
+            })
+            .select()
+            .single();
+
+          if (insertSubError) {
+            console.error('Error creating subscription:', insertSubError);
+            throw insertSubError;
+          }
+
+          activatedSubscriptionId = newSub.id;
+          console.log('Subscription created successfully:', activatedSubscriptionId);
         }
+
+        console.log('Updating transaction with subscription_id:', activatedSubscriptionId);
+        await supabase
+          .from('transactions')
+          .update({ subscription_id: activatedSubscriptionId })
+          .eq('id', transaction.id);
       }
     }
 
@@ -193,7 +247,14 @@ Deno.serve(async (req: Request) => {
           id: transaction.id,
           amount: transaction.amount,
           status: 'success'
-        }
+        },
+        subscription: activatedSubscriptionId ? {
+          id: activatedSubscriptionId,
+          plan: activatedPlan ? {
+            name: activatedPlan.name,
+            tier: activatedPlan.tier
+          } : null
+        } : null
       }),
       {
         status: 200,
