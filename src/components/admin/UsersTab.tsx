@@ -102,23 +102,23 @@ export function UsersTab() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Users Management</h2>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Users Management</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-full sm:w-64"
             />
           </div>
-          <Button>
-            <Download className="h-4 w-4 mr-2" />
-            Export
+          <Button className="w-full sm:w-auto min-h-[44px]">
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>
@@ -224,12 +224,13 @@ export function UsersTab() {
                         {formatDate(user.created_at)}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewUser(user)}
                             title="View Details"
+                            className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -238,6 +239,7 @@ export function UsersTab() {
                             size="sm"
                             onClick={() => handleEditUser(user)}
                             title="Edit User"
+                            className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -249,7 +251,7 @@ export function UsersTab() {
                               setShowDeleteConfirm(true);
                             }}
                             title="Delete User"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -273,14 +275,14 @@ export function UsersTab() {
       >
         {selectedUser && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
                 <p className="text-sm text-gray-900 dark:text-gray-100">{selectedUser.name}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedUser.email}</p>
+                <p className="text-sm text-gray-900 dark:text-gray-100 break-all">{selectedUser.email}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
@@ -291,7 +293,7 @@ export function UsersTab() {
                 <p className="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedUser.created_at)}</p>
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subscription</label>
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -308,14 +310,14 @@ export function UsersTab() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowUserModal(false)}>
+            <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3">
+              <Button variant="outline" onClick={() => setShowUserModal(false)} className="w-full sm:w-auto min-h-[44px]">
                 Close
               </Button>
               <Button onClick={() => {
                 setShowUserModal(false);
                 handleEditUser(selectedUser);
-              }}>
+              }} className="w-full sm:w-auto min-h-[44px]">
                 Edit User
               </Button>
             </div>
@@ -360,10 +362,10 @@ export function UsersTab() {
 
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">User to be deleted:</p>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{userToDelete.name} ({userToDelete.email})</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 break-all">{userToDelete.name} ({userToDelete.email})</p>
             </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -371,6 +373,7 @@ export function UsersTab() {
                   setUserToDelete(null);
                 }}
                 disabled={deleting}
+                className="w-full sm:w-auto min-h-[44px]"
               >
                 Cancel
               </Button>
@@ -378,6 +381,7 @@ export function UsersTab() {
                 variant="destructive"
                 onClick={handleDeleteUser}
                 loading={deleting}
+                className="w-full sm:w-auto min-h-[44px]"
               >
                 Delete User
               </Button>

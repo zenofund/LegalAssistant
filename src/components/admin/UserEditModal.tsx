@@ -92,27 +92,27 @@ export function UserEditModal({
     >
       <div className="space-y-6">
         {/* User Information */}
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           <div className="flex items-center space-x-3 mb-3">
-            <User className="h-5 w-5 text-gray-600" />
-            <h3 className="text-lg font-medium text-gray-900">User Information</h3>
+            <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">User Information</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700">User ID:</span>
-              <p className="text-gray-900 font-mono text-xs">{user.id}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">User ID:</span>
+              <p className="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">{user.id}</p>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Created:</span>
-              <p className="text-gray-900">{formatDate(user.created_at)}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Created:</span>
+              <p className="text-gray-900 dark:text-gray-100">{formatDate(user.created_at)}</p>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Last Updated:</span>
-              <p className="text-gray-900">{formatDate(user.updated_at)}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Last Updated:</span>
+              <p className="text-gray-900 dark:text-gray-100">{formatDate(user.updated_at)}</p>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Subscription:</span>
-              <p className="text-gray-900">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Subscription:</span>
+              <p className="text-gray-900 dark:text-gray-100">
                 {user.subscriptions?.[0]?.plan?.name || 'Free Plan'}
               </p>
             </div>
@@ -121,7 +121,7 @@ export function UserEditModal({
 
         {/* Editable Fields */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Edit Details</h3>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">Edit Details</h3>
           
           <Input
             label="Full Name"
@@ -139,19 +139,19 @@ export function UserEditModal({
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Role
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full min-h-[44px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
               <option value="super_admin">Super Admin</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Be careful when changing user roles. Higher roles have more permissions.
             </p>
           </div>
@@ -159,18 +159,18 @@ export function UserEditModal({
 
         {/* Current Subscription Details */}
         {user.subscriptions?.[0] && (
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
             <div className="flex items-center space-x-3 mb-3">
-              <Shield className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-medium text-gray-900">Subscription Details</h3>
+              <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">Subscription Details</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">Plan:</span>
-                <p className="text-gray-900">{user.subscriptions[0].plan?.name}</p>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Plan:</span>
+                <p className="text-gray-900 dark:text-gray-100">{user.subscriptions[0].plan?.name}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Status:</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Status:</span>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   user.subscriptions[0].status === 'active' 
                     ? 'bg-green-100 text-green-800'
@@ -184,18 +184,19 @@ export function UserEditModal({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={saving}
+            className="w-full sm:w-auto min-h-[44px]"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             loading={saving}
-            className="flex items-center space-x-2"
+            className="flex items-center justify-center space-x-2 w-full sm:w-auto min-h-[44px]"
           >
             <Save className="h-4 w-4" />
             <span>Save Changes</span>

@@ -117,37 +117,37 @@ export function SubscriptionDetailsModal({
     >
       <div className="space-y-6">
         {/* User Information */}
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           <div className="flex items-center space-x-3 mb-3">
-            <User className="h-5 w-5 text-gray-600" />
-            <h3 className="text-lg font-medium text-gray-900">User Information</h3>
+            <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">User Information</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700">Name:</span>
-              <p className="text-gray-900">{subscription.user?.name}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Name:</span>
+              <p className="text-gray-900 dark:text-gray-100">{subscription.user?.name}</p>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Email:</span>
-              <p className="text-gray-900">{subscription.user?.email}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
+              <p className="text-gray-900 dark:text-gray-100 break-all">{subscription.user?.email}</p>
             </div>
           </div>
         </div>
 
         {/* Current Plan Information */}
-        <div className="bg-blue-50 p-4 rounded-lg">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <div className="flex items-center space-x-3 mb-3">
-            <CreditCard className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-medium text-gray-900">Current Plan</h3>
+            <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">Current Plan</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700">Plan:</span>
-              <p className="text-gray-900">{subscription.plan?.name}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Plan:</span>
+              <p className="text-gray-900 dark:text-gray-100">{subscription.plan?.name}</p>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Price:</span>
-              <p className="text-gray-900">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Price:</span>
+              <p className="text-gray-900 dark:text-gray-100">
                 {subscription.plan?.price === 0 
                   ? 'Free' 
                   : `${formatCurrency(subscription.plan?.price)} per ${subscription.plan?.billing_cycle}`
@@ -159,15 +159,15 @@ export function SubscriptionDetailsModal({
 
         {/* Editable Fields */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Edit Subscription</h3>
-          
-          <div className="grid grid-cols-2 gap-4">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">Edit Subscription</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full min-h-[44px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="active">Active</option>
                 <option value="cancelled">Cancelled</option>
@@ -177,11 +177,11 @@ export function SubscriptionDetailsModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plan</label>
               <select
                 value={planId}
                 onChange={(e) => setPlanId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full min-h-[44px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={loadingPlans}
               >
                 <option value="">Select a plan</option>
@@ -194,7 +194,7 @@ export function SubscriptionDetailsModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Start Date"
               type="date"
@@ -216,9 +216,9 @@ export function SubscriptionDetailsModal({
               id="autoRenew"
               checked={autoRenew}
               onChange={(e) => setAutoRenew(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-5 w-5 min-h-[20px] min-w-[20px] text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
             />
-            <label htmlFor="autoRenew" className="text-sm font-medium text-gray-700">
+            <label htmlFor="autoRenew" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Auto-renew subscription
             </label>
           </div>
@@ -226,20 +226,20 @@ export function SubscriptionDetailsModal({
 
         {/* Payment Information */}
         {subscription.paystack_subscription_code && (
-          <div className="bg-yellow-50 p-4 rounded-lg">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
             <div className="flex items-center space-x-3 mb-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <h3 className="text-lg font-medium text-gray-900">Payment Information</h3>
+              <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">Payment Information</h3>
             </div>
             <div className="text-sm space-y-2">
               <div>
-                <span className="font-medium text-gray-700">Paystack Subscription Code:</span>
-                <p className="text-gray-900 font-mono text-xs">{subscription.paystack_subscription_code}</p>
+                <span className="font-medium text-gray-700 dark:text-gray-300">Paystack Subscription Code:</span>
+                <p className="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">{subscription.paystack_subscription_code}</p>
               </div>
               {subscription.paystack_customer_code && (
                 <div>
-                  <span className="font-medium text-gray-700">Customer Code:</span>
-                  <p className="text-gray-900 font-mono text-xs">{subscription.paystack_customer_code}</p>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Customer Code:</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">{subscription.paystack_customer_code}</p>
                 </div>
               )}
             </div>
@@ -247,35 +247,37 @@ export function SubscriptionDetailsModal({
         )}
 
         {/* Subscription Dates */}
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           <div className="flex items-center space-x-3 mb-3">
-            <Calendar className="h-5 w-5 text-gray-600" />
-            <h3 className="text-lg font-medium text-gray-900">Subscription Timeline</h3>
+            <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">Subscription Timeline</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700">Created:</span>
-              <p className="text-gray-900">{formatDate(subscription.created_at)}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Created:</span>
+              <p className="text-gray-900 dark:text-gray-100">{formatDate(subscription.created_at)}</p>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Last Updated:</span>
-              <p className="text-gray-900">{formatDate(subscription.updated_at)}</p>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Last Updated:</span>
+              <p className="text-gray-900 dark:text-gray-100">{formatDate(subscription.updated_at)}</p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={saving}
+            className="w-full sm:w-auto min-h-[44px]"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             loading={saving}
+            className="w-full sm:w-auto min-h-[44px]"
           >
             Save Changes
           </Button>

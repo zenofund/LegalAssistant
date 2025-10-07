@@ -93,33 +93,34 @@ export function DocumentsTab() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Documents Management</h2>
-        <Button onClick={() => setShowUploadModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Document
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Documents Management</h2>
+        <Button onClick={() => setShowUploadModal(true)} className="w-full sm:w-auto min-h-[44px]">
+          <Plus className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Add Document</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+        <div className="relative flex-1 sm:max-w-md">
           <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search documents..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
         <div className="flex items-center space-x-2">
-          <Filter className="h-4 w-4 text-gray-400" />
+          <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full sm:w-auto min-h-[44px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Types</option>
             <option value="case">Cases</option>
@@ -135,7 +136,7 @@ export function DocumentsTab() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
-            <table className="w-full min-w-[768px]">
+            <table className="w-full min-w-[640px]">
               <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                   <th className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
@@ -235,12 +236,13 @@ export function DocumentsTab() {
                         {formatDate(doc.created_at)}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewDocument(doc)}
                             title="View Details"
+                            className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -249,6 +251,7 @@ export function DocumentsTab() {
                             size="sm"
                             onClick={() => handleEditDocument(doc)}
                             title="Edit Document"
+                            className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -260,7 +263,7 @@ export function DocumentsTab() {
                               setShowDeleteConfirm(true);
                             }}
                             title="Delete Document"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -284,7 +287,7 @@ export function DocumentsTab() {
       >
         {selectedDocument && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                 <p className="text-sm text-gray-900 dark:text-gray-100">{selectedDocument.title}</p>
@@ -336,7 +339,7 @@ export function DocumentsTab() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File Size</label>
                 <p className="text-sm text-gray-900 dark:text-gray-100">
@@ -362,14 +365,14 @@ export function DocumentsTab() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowDocumentModal(false)}>
+            <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3">
+              <Button variant="outline" onClick={() => setShowDocumentModal(false)} className="w-full sm:w-auto min-h-[44px]">
                 Close
               </Button>
               <Button onClick={() => {
                 setShowDocumentModal(false);
                 handleEditDocument(selectedDocument);
-              }}>
+              }} className="w-full sm:w-auto min-h-[44px]">
                 Edit Document
               </Button>
             </div>
@@ -420,7 +423,7 @@ export function DocumentsTab() {
               )}
             </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-3 sm:space-y-0 sm:space-x-3">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -428,6 +431,7 @@ export function DocumentsTab() {
                   setDocumentToDelete(null);
                 }}
                 disabled={deleting}
+                className="w-full sm:w-auto min-h-[44px]"
               >
                 Cancel
               </Button>
@@ -435,6 +439,7 @@ export function DocumentsTab() {
                 variant="destructive"
                 onClick={handleDeleteDocument}
                 loading={deleting}
+                className="w-full sm:w-auto min-h-[44px]"
               >
                 Delete Document
               </Button>
