@@ -7,6 +7,7 @@ export interface Database {
           email: string;
           name: string | null;
           is_premium: boolean;
+          role: 'user' | 'admin' | 'super_admin';
           address: string | null;
           profile_picture_url: string | null;
           created_at: string;
@@ -17,6 +18,7 @@ export interface Database {
           email: string;
           name?: string | null;
           is_premium?: boolean;
+          role?: 'user' | 'admin' | 'super_admin';
           address?: string | null;
           profile_picture_url?: string | null;
         };
@@ -25,6 +27,7 @@ export interface Database {
           email?: string;
           name?: string | null;
           is_premium?: boolean;
+          role?: 'user' | 'admin' | 'super_admin';
           address?: string | null;
           profile_picture_url?: string | null;
         };

@@ -118,8 +118,8 @@ export function EnhancedDashboardPage() {
 
   if (!profile) return null;
 
-  // Admin features disabled - no role field in current schema
-  const isAdmin = false;
+  // Check if user has admin or super_admin role
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
 
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-dark-primary transition-colors duration-200">
@@ -274,6 +274,13 @@ export function EnhancedDashboardPage() {
         isOpen={showCaseBriefGenerator}
         onClose={() => setShowCaseBriefGenerator(false)}
       />
+
+      {isAdmin && (
+        <AdminDashboard
+          isOpen={showAdmin}
+          onClose={() => setShowAdmin(false)}
+        />
+      )}
     </div>
   );
 }
