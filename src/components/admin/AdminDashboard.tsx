@@ -568,11 +568,11 @@ function SubscriptionsTab() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          sub.status === 'active' 
-                            ? 'bg-green-100 text-green-800'
+                          sub.status === 'active'
+                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                             : sub.status === 'cancelled'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                            : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
                         }`}>
                           {sub.status}
                         </span>
@@ -743,20 +743,20 @@ function NotificationsTab() {
                         {notification.title}
                       </h3>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        notification.type === 'error' 
-                          ? 'bg-red-100 text-red-800'
+                        notification.type === 'error'
+                          ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
                           : notification.type === 'warning'
-                          ? 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
                           : notification.type === 'success'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                          : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
                       }`}>
                         {notification.type}
                       </span>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                         notification.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                       }`}>
                         {notification.is_active ? 'Active' : 'Inactive'}
                       </span>
@@ -800,9 +800,9 @@ function NotificationsTab() {
             onChange={(e) => setNewNotificationTitle(e.target.value)}
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
             <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               rows={4}
               placeholder="Enter notification message"
               value={newNotificationMessage}
@@ -811,9 +811,9 @@ function NotificationsTab() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-              <select 
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={newNotificationType}
                 onChange={(e) => setNewNotificationType(e.target.value)}
               >
@@ -824,9 +824,9 @@ function NotificationsTab() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Target Roles</label>
-              <select 
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Roles</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 multiple
                 value={newNotificationTargetRoles}
                 onChange={handleTargetRolesChange}
@@ -836,7 +836,7 @@ function NotificationsTab() {
                 <option value="super_admin">Super Admins</option>
                 <option value="all">All Users</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple roles</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple roles</p>
             </div>
           </div>
           <Input 

@@ -204,11 +204,11 @@ export function UsersTab() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          user.role === 'super_admin' 
-                            ? 'bg-red-100 text-red-800'
+                          user.role === 'super_admin'
+                            ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
                             : user.role === 'admin'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}>
                           {user.role}
                         </span>
@@ -275,32 +275,32 @@ export function UsersTab() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <p className="text-sm text-gray-900">{selectedUser.name}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedUser.name}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <p className="text-sm text-gray-900">{selectedUser.email}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedUser.email}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <p className="text-sm text-gray-900">{selectedUser.role}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedUser.role}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Joined</label>
-                <p className="text-sm text-gray-900">{formatDate(selectedUser.created_at)}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Joined</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedUser.created_at)}</p>
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subscription</label>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-gray-900">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subscription</label>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {selectedUser.subscriptions && selectedUser.subscriptions.length > 0 && selectedUser.subscriptions[0].plan
                     ? selectedUser.subscriptions[0].plan.name
                     : 'Free Plan'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Status: {selectedUser.subscriptions && selectedUser.subscriptions.length > 0
                     ? selectedUser.subscriptions[0].status || 'Active'
                     : 'Free'}
@@ -358,9 +358,9 @@ export function UsersTab() {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm font-medium text-gray-900">User to be deleted:</p>
-              <p className="text-sm text-gray-700">{userToDelete.name} ({userToDelete.email})</p>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">User to be deleted:</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{userToDelete.name} ({userToDelete.email})</p>
             </div>
 
             <div className="flex justify-end space-x-3">

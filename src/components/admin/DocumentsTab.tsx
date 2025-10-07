@@ -119,7 +119,7 @@ export function DocumentsTab() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Types</option>
             <option value="case">Cases</option>
@@ -214,13 +214,13 @@ export function DocumentsTab() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          doc.type === 'case' 
-                            ? 'bg-blue-100 text-blue-800'
+                          doc.type === 'case'
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
                             : doc.type === 'statute'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
                             : doc.type === 'regulation'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}>
                           {doc.type}
                         </span>
@@ -286,48 +286,48 @@ export function DocumentsTab() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <p className="text-sm text-gray-900">{selectedDocument.title}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedDocument.title}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <p className="text-sm text-gray-900 capitalize">{selectedDocument.type}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100 capitalize">{selectedDocument.type}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Citation</label>
-                <p className="text-sm text-gray-900">{selectedDocument.citation || 'N/A'}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Citation</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedDocument.citation || 'N/A'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <p className="text-sm text-gray-900">{selectedDocument.year || 'N/A'}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedDocument.year || 'N/A'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Jurisdiction</label>
-                <p className="text-sm text-gray-900 capitalize">{selectedDocument.jurisdiction}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jurisdiction</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100 capitalize">{selectedDocument.jurisdiction}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Uploaded By</label>
-                <p className="text-sm text-gray-900">{selectedDocument.uploader?.name || 'System'}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Uploaded By</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedDocument.uploader?.name || 'System'}</p>
               </div>
             </div>
             
             {selectedDocument.description && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-900">{selectedDocument.description}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{selectedDocument.description}</p>
                 </div>
               </div>
             )}
 
             {selectedDocument.tags && selectedDocument.tags.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags</label>
                 <div className="flex flex-wrap gap-2">
                   {selectedDocument.tags.map((tag: string, index: number) => (
                     <span
                       key={index}
-                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                      className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full"
                     >
                       {tag}
                     </span>
@@ -338,27 +338,27 @@ export function DocumentsTab() {
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File Size</label>
-                <p className="text-sm text-gray-900">
-                  {selectedDocument.file_size 
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File Size</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">
+                  {selectedDocument.file_size
                     ? `${(selectedDocument.file_size / 1024 / 1024).toFixed(2)} MB`
                     : 'N/A'
                   }
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Public Access</label>
-                <p className="text-sm text-gray-900">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Public Access</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">
                   {selectedDocument.is_public ? 'Yes' : 'No'}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                <p className="text-sm text-gray-900">{formatDate(selectedDocument.created_at)}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Created</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedDocument.created_at)}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
-                <p className="text-sm text-gray-900">{formatDate(selectedDocument.updated_at)}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Updated</label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{formatDate(selectedDocument.updated_at)}</p>
               </div>
             </div>
 
@@ -412,11 +412,11 @@ export function DocumentsTab() {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm font-medium text-gray-900">Document to be deleted:</p>
-              <p className="text-sm text-gray-700">{documentToDelete.title}</p>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Document to be deleted:</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{documentToDelete.title}</p>
               {documentToDelete.citation && (
-                <p className="text-xs text-gray-500">{documentToDelete.citation}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{documentToDelete.citation}</p>
               )}
             </div>
 
