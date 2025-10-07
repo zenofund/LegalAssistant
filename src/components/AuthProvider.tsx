@@ -99,33 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return null;
       }
 
-      console.log('✅ AuthProvider: Base profile loaded:', userProfile.name);
-
-      try {
-        const subQuery = supabase
-          .from('subscriptions')
-          .select(`
-            *,
-            plan:plans (*)
-          `)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        const subTimeout = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Subscription fetch timeout')), 5000);
-        });
-
-        const { data: subscription } = await Promise.race([subQuery, subTimeout]) as any;
-
-        if (subscription) {
-          console.log('✅ AuthProvider: Subscription data loaded');
-          const fullProfile = { ...userProfile, subscription };
-          setCachedProfile(userId, fullProfile);
-          return fullProfile;
-        }
-      } catch (subError) {
-        console.warn('⚠️ AuthProvider: Could not load subscription, continuing with basic profile');
-      }
+      console.log('✅ AuthProvider: Profile loaded:', userProfile.name || userProfile.email);
 
       setCachedProfile(userId, userProfile);
       return userProfile;
@@ -325,11 +299,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         id: data.user.id,
         email,
         name,
-        role: 'user' as const
+        is_premium: false
       };
-      
+
       console.log('🔍 SignUp: Attempting to insert user profile with data:', userProfileData);
-      
+
       const { error: profileError } = await supabase
         .from('users')
         .insert(userProfileData);

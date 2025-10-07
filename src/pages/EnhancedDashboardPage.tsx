@@ -118,12 +118,8 @@ export function EnhancedDashboardPage() {
 
   if (!profile) return null;
 
-  const isAdmin = hasPermission(profile.role, ['admin', 'super_admin']);
-
-  // Show admin dashboard if requested and user has permission
-  if (showAdmin && isAdmin) {
-    return <AdminDashboard />;
-  }
+  // Admin features disabled - no role field in current schema
+  const isAdmin = false;
 
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-dark-primary transition-colors duration-200">

@@ -5,31 +5,28 @@ export interface Database {
         Row: {
           id: string;
           email: string;
-          name: string;
-          role: 'user' | 'admin' | 'super_admin';
-          subscription_id: string | null;
-          memory: Record<string, any>;
-          preferences: Record<string, any>;
+          name: string | null;
+          is_premium: boolean;
+          address: string | null;
+          profile_picture_url: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           email: string;
-          name: string;
-          role?: 'user' | 'admin' | 'super_admin';
-          subscription_id?: string | null;
-          memory?: Record<string, any>;
-          preferences?: Record<string, any>;
+          name?: string | null;
+          is_premium?: boolean;
+          address?: string | null;
+          profile_picture_url?: string | null;
         };
         Update: {
           id?: string;
           email?: string;
-          name?: string;
-          role?: 'user' | 'admin' | 'super_admin';
-          subscription_id?: string | null;
-          memory?: Record<string, any>;
-          preferences?: Record<string, any>;
+          name?: string | null;
+          is_premium?: boolean;
+          address?: string | null;
+          profile_picture_url?: string | null;
         };
       };
       plans: {
@@ -382,8 +379,4 @@ export interface Plan {
   ai_model: string;
 }
 
-export type UserProfile = Database['public']['Tables']['users']['Row'] & {
-  subscription?: Database['public']['Tables']['subscriptions']['Row'] & {
-    plan: Plan;
-  };
-};
+export type UserProfile = Database['public']['Tables']['users']['Row'];

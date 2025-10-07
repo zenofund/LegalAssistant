@@ -49,9 +49,8 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
       setCurrentDocumentCount(count || 0);
 
-      // Get max document limit from current plan
-      const currentPlan = profile.subscription?.plan;
-      setMaxDocumentLimit(currentPlan?.max_documents || 10);
+      // Get max document limit based on premium status
+      setMaxDocumentLimit(profile.is_premium ? 1000 : 10);
 
     } catch (error) {
       console.error('Error loading document usage:', error);
@@ -107,8 +106,8 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
     if (!profile) return;
 
     // Check document upload limits
-    const currentPlan = profile.subscription?.plan;
-    if (currentPlan && currentPlan.max_documents !== -1) {
+    const maxDocs = profile.is_premium ? 1000 : 10;
+    if (maxDocs !== -1) {
       try {
         const { count, error: countError } = await supabase
           .from('documents')
@@ -117,13 +116,13 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
         if (countError) throw countError;
 
-        if ((count || 0) >= currentPlan.max_documents) {
-          setFiles(prev => prev.map(f => 
-            f.id === fileUpload.id 
-              ? { 
-                  ...f, 
-                  status: 'error', 
-                  error: `Document limit reached (${currentPlan.max_documents}). Upgrade your plan for more uploads.`
+        if ((count || 0) >= maxDocs) {
+          setFiles(prev => prev.map(f =>
+            f.id === fileUpload.id
+              ? {
+                  ...f,
+                  status: 'error',
+                  error: `Document limit reached (${maxDocs}). ${profile.is_premium ? '' : 'Upgrade to premium for more uploads.'}`
                 }
               : f
           ));
@@ -131,11 +130,11 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
         }
       } catch (error) {
         console.error('Error checking document limits:', error);
-        setFiles(prev => prev.map(f => 
-          f.id === fileUpload.id 
-            ? { 
-                ...f, 
-                status: 'error', 
+        setFiles(prev => prev.map(f =>
+          f.id === fileUpload.id
+            ? {
+                ...f,
+                status: 'error',
                 error: 'Failed to check upload limits. Please try again.'
               }
             : f
