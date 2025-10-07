@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -65,10 +65,10 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
   const [sharingMessage, setSharingMessage] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const [scrollButtonPosition, setScrollButtonPosition] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { profile } = useAuth();
   const { currentSession, messages, sendMessage, createNewSession, loadSession } = useChatStore();
   const { showError, showWarning } = useToast();
@@ -79,6 +79,32 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
     }
   };
 
+  // Improved scroll detection with throttling
+  const checkScrollPosition = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    // Use a smaller, more precise threshold (20px instead of 100px)
+    const isAtBottom = scrollHeight - scrollTop - clientHeight <= 20;
+    
+    // Only show button if there are messages and user is not at bottom
+    const shouldShowButton = messages.length > 0 && !isAtBottom;
+    
+    setShowScrollButton(shouldShowButton);
+  }, [messages.length]);
+
+  // Throttled scroll handler for better performance
+  const handleScroll = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = setTimeout(() => {
+      checkScrollPosition();
+    }, 16); // ~60fps throttling
+  }, [checkScrollPosition]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -87,24 +113,18 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
     const container = messagesContainerRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isNearBottom && messages.length > 0);
-
-      // Calculate dynamic position for scroll button
-      if (!isNearBottom && messages.length > 0) {
-        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-        const maxVisibleHeight = clientHeight - 100; // Keep button 100px from top
-        const buttonOffset = Math.min(distanceFromBottom / 2, maxVisibleHeight);
-        setScrollButtonPosition(buttonOffset);
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initial check
+    checkScrollPosition();
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
-
-    container.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial position calculation
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [messages.length]);
+  }, [handleScroll, checkScrollPosition]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -457,27 +477,56 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Scroll to Bottom Button - Dynamic Position */}
+        {/* Improved Scroll to Bottom Button */}
         <AnimatePresence>
           {showScrollButton && (
             <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                bottom: `${Math.max(scrollButtonPosition, 24)}px`
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                y: 0,
+                transition: {
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 25,
+                  duration: 0.3
+                }
               }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{
-                opacity: { duration: 0.2 },
-                scale: { duration: 0.2 },
-                bottom: { duration: 0.15, ease: 'easeOut' }
+              exit={{ 
+                opacity: 0, 
+                scale: 0.8, 
+                y: 20,
+                transition: {
+                  duration: 0.2,
+                  ease: "easeInOut"
+                }
               }}
+              whileHover={{ 
+                scale: 1.1,
+                transition: { duration: 0.15 }
+              }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => scrollToBottom('smooth')}
-              className="absolute left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-10"
+              className="fixed bottom-32 left-1/2 -translate-x-1/2 z-20 w-12 h-12 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
               title="Scroll to bottom"
+              aria-label="Scroll to bottom of chat"
             >
               <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              
+              {/* Subtle pulse animation */}
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-blue-500/30"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.5, 0, 0.5]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
             </motion.button>
           )}
         </AnimatePresence>
@@ -488,7 +537,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
         <div className="max-w-4xl mx-auto px-4 py-4 bg-white dark:bg-gray-800 rounded-t-2xl">
           
           <form onSubmit={handleSubmit} className="relative">
-            <div className="relative">
+            <div className="relative flex items-end bg-gray-100 dark:bg-gray-700 rounded-2xl border border-gray-200 dark:border-gray-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-colors">
               <textarea
                 ref={textareaRef}
                 value={message}
@@ -496,8 +545,8 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                 onKeyDown={handleKeyDown}
                 onFocus={handleTextareaFocus}
                 onBlur={handleTextareaBlur}
-                placeholder="Ask about Nigerian law, legal cases, or upload documents for analysis..."
-                className="w-full px-4 py-3 pr-28 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400 transition-colors touch-action-manipulation scrollbar-conditional"
+                placeholder="Ask about Nigerian law, upload documents, or use AI tools..."
+                className="flex-1 bg-transparent border-none outline-none resize-none px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 min-h-[48px] max-h-[120px]"
                 rows={1}
                 disabled={isLoading}
               />
@@ -900,104 +949,25 @@ function EnhancedMessageBubble({
             ? 'prose-invert'
             : 'prose-gray dark:prose-invert'
         }`}>
-          {message.role === 'user' ? (
-            <div className="whitespace-pre-wrap">{message.message}</div>
-          ) : (
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                // Customize heading styles
-                h1: ({children}) => <h1 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">{children}</h1>,
-                h2: ({children}) => <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">{children}</h2>,
-                h3: ({children}) => <h3 className="text-base font-medium mb-2 text-gray-700 dark:text-gray-300">{children}</h3>,
-
-                // Customize paragraph styles
-                p: ({children}) => <p className="mb-3 text-gray-800 dark:text-gray-200 leading-relaxed">{children}</p>,
-
-                // Customize list styles
-                ul: ({children}) => <ul className="mb-3 ml-4 space-y-1">{children}</ul>,
-                ol: ({children}) => <ol className="mb-3 ml-4 space-y-1">{children}</ol>,
-                li: ({children}) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
-
-                // Customize emphasis styles
-                strong: ({children}) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
-                em: ({children}) => <em className="italic text-gray-800 dark:text-gray-200">{children}</em>,
-
-                // Customize code styles
-                code: ({children, className}) => {
-                  const isInline = !className;
-                  return isInline ? (
-                    <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-mono">
-                      {children}
-                    </code>
-                  ) : (
-                    <code className={className}>{children}</code>
-                  );
-                },
-                pre: ({children}) => (
-                  <pre className="mb-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-x-auto">
-                    {children}
-                  </pre>
-                ),
-
-                // Customize blockquote styles
-                blockquote: ({children}) => (
-                  <blockquote className="mb-3 pl-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/30 py-2 italic text-gray-800 dark:text-gray-200">
-                    {children}
-                  </blockquote>
-                ),
-
-                // Customize table styles
-                table: ({children}) => (
-                  <div className="mb-3 overflow-x-auto">
-                    <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg">
-                      {children}
-                    </table>
-                  </div>
-                ),
-                thead: ({children}) => (
-                  <thead className="bg-gray-50 dark:bg-gray-800">{children}</thead>
-                ),
-                th: ({children}) => (
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
-                    {children}
-                  </th>
-                ),
-                td: ({children}) => (
-                  <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
-                    {children}
-                  </td>
-                ),
-                
-                // Customize link styles
-                a: ({children, href}) => (
-                  <a 
-                    href={href} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 underline"
-                  >
-                    {children}
-                  </a>
-                ),
-              }}
-            >
-              {message.message}
-            </ReactMarkdown>
-          )}
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {message.message}
+          </ReactMarkdown>
         </div>
 
         {/* Message Metadata */}
         {message.role === 'assistant' && (
-          <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center space-x-4">
-              <span>Model: {getModelDisplayName(message.model_used)}</span>
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>{getModelDisplayName(message.model_used)}</span>
+              {message.tokens_used && (
+                <span>{message.tokens_used.toLocaleString()} tokens</span>
+              )}
               <span>{formatDate(message.created_at)}</span>
             </div>
-            
-            {/* Message Actions */}
+
+            {/* Action Buttons */}
             <AnimatePresence>
-              {showActions && (
+              {showActions && message.role === 'assistant' && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
