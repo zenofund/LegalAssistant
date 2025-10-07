@@ -242,7 +242,7 @@ function OverviewTab({ stats, loading }: { stats: AdminStats | null; loading: bo
       // Get recent documents (last 10)
       const { data: recentDocs } = await supabase
         .from('documents')
-        .select('id, title, user_id, created_at, users(name, email)')
+        .select('id, title, uploaded_by, created_at, uploader:users!uploaded_by(name, email)')
         .order('created_at', { ascending: false })
         .limit(5);
 

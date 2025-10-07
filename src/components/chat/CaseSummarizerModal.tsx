@@ -74,7 +74,10 @@ export function CaseSummarizerModal({ isOpen, onClose }: CaseSummarizerModalProp
   };
 
   const handleGenerate = async () => {
-    if (!profile) return;
+    if (!profile) {
+      showError('Profile Error', 'User profile not loaded. Please refresh the page and try again.');
+      return;
+    }
 
     if (inputMode === 'document' && !selectedDocumentId) {
       showError('Validation Error', 'Please select a case document');

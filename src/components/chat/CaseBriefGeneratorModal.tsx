@@ -101,7 +101,10 @@ export function CaseBriefGeneratorModal({ isOpen, onClose }: CaseBriefGeneratorM
   };
 
   const handleGenerate = async () => {
-    if (!profile) return;
+    if (!profile) {
+      showError('Profile Error', 'User profile not loaded. Please refresh the page and try again.');
+      return;
+    }
 
     if (!court) {
       showError('Validation Error', 'Please select a court');
