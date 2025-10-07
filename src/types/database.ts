@@ -5,31 +5,34 @@ export interface Database {
         Row: {
           id: string;
           email: string;
-          name: string | null;
-          is_premium: boolean;
+          name: string;
           role: 'user' | 'admin' | 'super_admin';
-          address: string | null;
-          profile_picture_url: string | null;
+          subscription_id: string | null;
+          memory: Record<string, any>;
+          preferences: Record<string, any>;
           created_at: string;
           updated_at: string;
+          theme_preference: string;
         };
         Insert: {
           id?: string;
           email: string;
-          name?: string | null;
-          is_premium?: boolean;
+          name: string;
           role?: 'user' | 'admin' | 'super_admin';
-          address?: string | null;
-          profile_picture_url?: string | null;
+          subscription_id?: string | null;
+          memory?: Record<string, any>;
+          preferences?: Record<string, any>;
+          theme_preference?: string;
         };
         Update: {
           id?: string;
           email?: string;
-          name?: string | null;
-          is_premium?: boolean;
+          name?: string;
           role?: 'user' | 'admin' | 'super_admin';
-          address?: string | null;
-          profile_picture_url?: string | null;
+          subscription_id?: string | null;
+          memory?: Record<string, any>;
+          preferences?: Record<string, any>;
+          theme_preference?: string;
         };
       };
       plans: {

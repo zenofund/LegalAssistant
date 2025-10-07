@@ -78,37 +78,74 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setTimeout(() => reject(new Error('Profile fetch timeout')), timeout);
       });
 
-      const profileQuery = supabase
+      const userQuery = supabase
         .from('users')
-        .select(`
-          *,
-          subscription:subscriptions!subscription_id (
-            id,
-            plan_id,
-            status,
-            start_date,
-            end_date,
-            plan:plans (
-              id,
-              name,
-              tier,
-              price,
-              max_documents,
-              max_chats_per_day,
-              internet_search,
-              ai_drafting,
-              collaboration,
-              ai_model
-            )
-          )
-        `)
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      const { data: userProfile, error } = await Promise.race([
-        profileQuery,
+      const { data: userData, error: userError } = await Promise.race([
+        userQuery,
         timeoutPromise
       ]) as any;
+
+      if (userError) {
+        console.error('❌ AuthProvider: Error fetching user:', userError);
+        throw userError;
+      }
+
+      if (!userData) {
+        console.warn('⚠️ AuthProvider: No user found for id:', userId);
+        return null;
+      }
+
+      const subscriptionQuery = supabase
+        .from('subscriptions')
+        .select(`
+          id,
+          plan_id,
+          status,
+          start_date,
+          end_date,
+          plans (
+            id,
+            name,
+            tier,
+            price,
+            max_documents,
+            max_chats_per_day,
+            internet_search,
+            ai_drafting,
+            collaboration,
+            ai_model
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      const { data: subscriptionData, error: subscriptionError } = await Promise.race([
+        subscriptionQuery,
+        timeoutPromise
+      ]) as any;
+
+      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+        console.error('⚠️ AuthProvider: Error fetching subscription:', subscriptionError);
+      }
+
+      const userProfile = {
+        ...userData,
+        subscription: subscriptionData ? {
+          id: subscriptionData.id,
+          plan_id: subscriptionData.plan_id,
+          status: subscriptionData.status,
+          start_date: subscriptionData.start_date,
+          end_date: subscriptionData.end_date,
+          plan: subscriptionData.plans,
+        } : undefined,
+      };
+
+      const error = null;
 
       if (error) {
         console.error('❌ AuthProvider: Error fetching profile:', error);
@@ -314,13 +351,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     console.log('✅ AuthProvider: signUp auth successful, creating profile...');
-    // Create user profile
     if (data.user) {
       const userProfileData = {
         id: data.user.id,
         email,
         name,
-        is_premium: false
+        role: 'user' as const,
+        memory: {},
+        preferences: {},
       };
 
       console.log('🔍 SignUp: Attempting to insert user profile with data:', userProfileData);
