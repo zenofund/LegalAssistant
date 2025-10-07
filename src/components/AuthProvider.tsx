@@ -69,7 +69,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const maxAttempts = 3;
-    const timeout = 20000;
+    const timeout = 60000; // Increased timeout to 60 seconds
+
 
     try {
       console.log(`🔍 AuthProvider: Fetching profile (attempt ${attempt + 1}/${maxAttempts})...`);
@@ -77,6 +78,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Profile fetch timeout')), timeout);
       });
+
+
 
       const userQuery = supabase
         .from('users')
@@ -187,10 +190,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const cached = getCachedProfile(userId);
       if (cached) {
-        console.log('💾 AuthProvider: All retries failed, using cached profile');
+        console.log("💾 AuthProvider: All retries failed, using cached profile due to timeout/error");
         return cached;
       }
-
       throw error;
     }
   };
@@ -262,15 +264,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
                  profileError.message.includes('fetch'));
 
               if (isNetworkError) {
-                console.log('📡 Network error detected, keeping user logged in');
+                console.log("📡 Network error detected, attempting to use cached profile or keep current state");
                 const cached = getCachedProfile(session.user.id);
                 if (cached) {
-                  console.log('💾 Using cached profile due to network error');
+                  console.log("💾 Using cached profile due to network error");
                   setProfile(cached);
-                } else {
+                } else if (profile === null) {
+                  // If no cached profile and current profile is null, keep it null
                   setProfile(null);
+                } else {
+                  // If no cached profile but a profile was previously set, keep the existing profile
+                  // This prevents setting profile to null unnecessarily and triggering re-renders
+                  console.log("⚠️ No cached profile, retaining existing profile due to network error");
                 }
               } else {
+                // For non-network errors, clear the profile
                 setProfile(null);
               }
             }
@@ -306,9 +314,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     timeoutId = setTimeout(() => {
       if (!initialized && mountedRef.current) {
-        console.warn('⏰ AuthProvider: Auth check timeout, clearing loading state');
+        console.warn('⏰ AuthProvider: Auth check timeout, clearing loading state and setting initialized to true');
         setLoading(false);
-        setInitialized(true);
+        setInitialized(true); // Ensure initialized is set to true even on timeout
       }
     }, 15000);
 
