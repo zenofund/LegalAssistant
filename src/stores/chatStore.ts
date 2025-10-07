@@ -96,12 +96,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       .from('users')
       .select(`
         *,
-        subscription:subscriptions!users_subscription_id_fkey (
+        subscription:subscriptions (
           *,
           plan:plans (*)
         )
       `)
       .eq('id', user.id)
+      .eq('subscriptions.user_id', user.id)
+      .eq('subscriptions.status', 'active')
       .single();
 
     if (profileError || !profile) {
