@@ -447,7 +447,7 @@ function SubscriptionsTab() {
         .from('subscriptions')
         .select(`
           *,
-          user:users(name, email),
+          user:users!subscriptions_user_id_fkey(name, email),
           plan:plans(name, price, tier, billing_cycle)
         `)
         .order('created_at', { ascending: false });
