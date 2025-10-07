@@ -324,7 +324,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       window.removeEventListener('session-recovered', handleSessionRecovered);
       stopSessionMonitoring();
     };
-  }, [initialized]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 AuthProvider: signIn called for email:', email);
