@@ -2,8 +2,9 @@ import React, { useState, useEffect, createContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { UserProfile } from '../types/database';
-import { getCachedProfile, setCachedProfile, clearCachedProfile } from '../lib/profileCache';
-import { startSessionMonitoring, stopSessionMonitoring, validateSession, recoverSession, getNetworkStatus } from '../lib/sessionManager';
+import { getCachedProfile, clearCachedProfile } from '../lib/profileCache';
+import { startSessionMonitoring, stopSessionMonitoring, getNetworkStatus } from '../lib/sessionManager';
+import { fetchUserProfileWithRetry } from '../lib/profileService';
 
 // Define the AuthContextType interface
 export interface AuthContextType {
@@ -29,172 +30,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  const fetchProfileWithRetry = async (
+  const fetchProfile = async (
     userId: string,
-    attempt: number = 0,
-    useCache: boolean = true,
-    mountedRef?: { current: boolean }
+    useCache: boolean = true
   ): Promise<UserProfile | null> => {
-    if (useCache && attempt === 0) {
-      const cached = getCachedProfile(userId);
-      if (cached) {
-        console.log('💾 AuthProvider: Using cached profile');
-
-        (async () => {
-          try {
-            if (getNetworkStatus()) {
-              const fresh = await fetchProfileWithRetry(userId, 0, false, mountedRef);
-              if (fresh && (!mountedRef || mountedRef.current)) {
-                setCachedProfile(userId, fresh);
-                setProfile(fresh);
-                console.log('🔄 AuthProvider: Background profile refresh complete');
-              }
-            } else {
-              console.log('📡 AuthProvider: Offline, skipping background refresh');
-            }
-          } catch (error) {
-            console.warn('⚠️ AuthProvider: Background refresh failed, using cached data');
-          }
-        })();
-
-        return cached;
-      }
-    }
-
-    if (!getNetworkStatus() && attempt > 0) {
-      console.log('📡 AuthProvider: Offline, skipping profile fetch');
-      throw new Error('Network unavailable');
-    }
-
-    const maxAttempts = 3;
-    const timeout = 60000; // Increased timeout to 60 seconds
-
-
-    try {
-      console.log(`🔍 AuthProvider: Fetching profile (attempt ${attempt + 1}/${maxAttempts})...`);
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Profile fetch timeout')), timeout);
-      });
-
-
-
-      const userQuery = supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const { data: userData, error: userError } = await Promise.race([
-        userQuery,
-        timeoutPromise
-      ]) as any;
-
-      if (userError) {
-        console.error('❌ AuthProvider: Error fetching user:', userError);
-        console.error('❌ AuthProvider: Error code:', userError.code);
-        console.error('❌ AuthProvider: Error details:', userError.details);
-
-        if (userError.code === '500' || userError.message?.includes('500')) {
-          console.warn('⚠️ AuthProvider: Server error detected, will retry');
-        }
-        throw userError;
-      }
-
-      if (!userData) {
-        console.warn('⚠️ AuthProvider: No user found for id:', userId);
-        return null;
-      }
-
-      const subscriptionQuery = supabase
-        .from('subscriptions')
-        .select(`
-          id,
-          plan_id,
-          status,
-          start_date,
-          end_date,
-          plans (
-            id,
-            name,
-            tier,
-            price,
-            max_documents,
-            max_chats_per_day,
-            internet_search,
-            ai_drafting,
-            collaboration,
-            ai_model
-          )
-        `)
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      const { data: subscriptionData, error: subscriptionError } = await Promise.race([
-        subscriptionQuery,
-        timeoutPromise
-      ]) as any;
-
-      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-        console.error('⚠️ AuthProvider: Error fetching subscription:', subscriptionError);
-        console.error('⚠️ AuthProvider: Subscription error code:', subscriptionError.code);
-
-        if (subscriptionError.code === '500' || subscriptionError.message?.includes('500')) {
-          console.warn('⚠️ AuthProvider: Subscription server error, user will have default plan');
-        }
-      }
-
-      const userProfile = {
-        ...userData,
-        subscription: subscriptionData && subscriptionData.plans ? {
-          id: subscriptionData.id,
-          plan_id: subscriptionData.plan_id,
-          status: subscriptionData.status,
-          start_date: subscriptionData.start_date,
-          end_date: subscriptionData.end_date,
-          plan: subscriptionData.plans,
-        } : undefined,
-      };
-
-      if (!userProfile) {
-        console.warn('⚠️ AuthProvider: No profile found for user:', userId);
-        return null;
-      }
-
-      console.log('✅ AuthProvider: Profile loaded:', userProfile.name || userProfile.email);
-
-      setCachedProfile(userId, userProfile);
-      return userProfile;
-    } catch (error: any) {
-      console.error(`💥 AuthProvider: Profile fetch attempt ${attempt + 1} failed:`, error);
-
-      const isServerError = error?.code === '500' ||
-                           error?.message?.includes('500') ||
-                           error?.message?.includes('server error') ||
-                           error?.statusCode === 500;
-
-      if (!getNetworkStatus()) {
-        console.log('📡 AuthProvider: Network offline, stopping retries');
-        throw new Error('Network unavailable');
-      }
-
-      if (attempt < maxAttempts - 1 && (isServerError || !error.code)) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-        console.log(`⏳ AuthProvider: Retrying in ${delay}ms... (Server error: ${isServerError})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return fetchProfileWithRetry(userId, attempt + 1, false, mountedRef);
-      }
-
-      const cached = getCachedProfile(userId);
-      if (cached) {
-        console.log("💾 AuthProvider: All retries failed, using cached profile due to timeout/error");
-        return cached;
-      }
-      throw error;
-    }
+    return fetchUserProfileWithRetry(userId, 3, { useCache });
   };
 
   useEffect(() => {
@@ -205,7 +46,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const handleNetworkChange = (e: Event) => {
       const online = (e as CustomEvent).type === 'online';
-      setIsOffline(!online);
       console.log(`📡 Network status: ${online ? 'online' : 'offline'}`);
     };
 
@@ -215,7 +55,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (session?.user && mountedRef.current) {
         console.log('♻️ Refreshing user data after session recovery');
         try {
-          const userProfile = await fetchProfileWithRetry(session.user.id, 0, true, mountedRef);
+          const userProfile = await fetchProfile(session.user.id, true);
           if (mountedRef.current && userProfile) {
             setProfile(userProfile);
           }
@@ -251,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(session.user);
 
           try {
-            const userProfile = await fetchProfileWithRetry(session.user.id, 0, true, mountedRef);
+            const userProfile = await fetchProfile(session.user.id, true);
             if (mountedRef.current) {
               setProfile(userProfile);
             }
@@ -261,7 +101,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               const isNetworkError = profileError instanceof Error &&
                 (profileError.message.includes('Network') ||
                  profileError.message.includes('timeout') ||
-                 profileError.message.includes('fetch'));
+                 profileError.message.includes('fetch') ||
+                 profileError.message.includes('aborted'));
 
               if (isNetworkError) {
                 console.log("📡 Network error detected, attempting to use cached profile or keep current state");
@@ -270,15 +111,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   console.log("💾 Using cached profile due to network error");
                   setProfile(cached);
                 } else if (profile === null) {
-                  // If no cached profile and current profile is null, keep it null
                   setProfile(null);
                 } else {
-                  // If no cached profile but a profile was previously set, keep the existing profile
-                  // This prevents setting profile to null unnecessarily and triggering re-renders
                   console.log("⚠️ No cached profile, retaining existing profile due to network error");
                 }
               } else {
-                // For non-network errors, clear the profile
                 setProfile(null);
               }
             }
@@ -421,7 +258,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .from('users')
       .update(updates)
       .eq('id', user.id)
-      .select() // It's good practice to select the updated data
+      .select()
       .single();
 
     if (error) {
@@ -430,9 +267,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     console.log('✅ AuthProvider: Profile updated successfully');
-    // After a successful update, refresh the profile state with the new data
-    // This avoids another network request.
-    setProfile((prevProfile) => ({ ...prevProfile, ...updates }));
+    if (profile) {
+      setProfile({ ...profile, ...updates });
+    }
 
     return {};
   };
@@ -445,7 +282,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      const userProfile = await fetchProfileWithRetry(user.id);
+      const userProfile = await fetchProfile(user.id, false);
       if (userProfile) {
         console.log('✅ AuthProvider: Profile refreshed successfully');
         setProfile(userProfile);
