@@ -40,7 +40,7 @@ import { CaseBriefGeneratorModal } from './CaseBriefGeneratorModal';
 import { UpgradeModal } from '../subscription/UpgradeModal';
 import { UploadModal } from '../documents/UploadModal';
 import { DynamicLogo } from '../ui/DynamicLogo';
-import { formatDate, cn, hasPremiumAccess } from '../../lib/utils';
+import { formatDate, cn, hasPremiumAccess, getPersonalizedGreeting } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
@@ -777,7 +777,7 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string
             <DynamicLogo className="w-32 h-auto rounded-lg object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Welcome to easyAI
+            {getPersonalizedGreeting(profile?.name)}
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
             Your AI-powered legal research assistant for Nigerian law.

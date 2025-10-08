@@ -4,6 +4,7 @@ import { Send, Loader2, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/chatStore';
+import { getPersonalizedGreeting } from '../../lib/utils';
 import type { ChatMessage, DocumentSource } from '../../types/database';
 
 export function ChatInterface() {
@@ -52,7 +53,7 @@ export function ChatInterface() {
                 <FileText className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Welcome to easyAI
+                {getPersonalizedGreeting(profile?.name)}
               </h3>
               <p className="text-gray-600 mb-6">
                 Ask me anything about Nigerian law, legal cases, or upload documents for analysis.

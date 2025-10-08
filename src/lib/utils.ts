@@ -142,3 +142,21 @@ export function hasPremiumAccess(tier?: string, role?: string): boolean {
 export function isProOrEnterprise(tier?: string): boolean {
   return tier === 'pro' || tier === 'enterprise';
 }
+
+export function getTimeBasedGreeting(): string {
+  const hour = new Date().getHours();
+
+  if (hour >= 0 && hour < 12) {
+    return 'Good morning';
+  } else if (hour >= 12 && hour < 18) {
+    return 'Good afternoon';
+  } else {
+    return 'Good evening';
+  }
+}
+
+export function getPersonalizedGreeting(userName?: string): string {
+  const greeting = getTimeBasedGreeting();
+  const firstName = userName?.split(' ')[0] || 'there';
+  return `${greeting}, ${firstName}!`;
+}
