@@ -7,6 +7,7 @@ interface ChatStore {
   currentSession: string | null;
   messages: ChatMessage[];
   isLoading: boolean;
+  isLoadingSession: boolean;
   error: string | null;
   abortController: AbortController | null;
 
@@ -18,10 +19,24 @@ interface ChatStore {
   cancelRequest: () => void;
 }
 
+// Deduplication utility function
+function deduplicateMessages(messages: ChatMessage[]): ChatMessage[] {
+  const seen = new Map<string, ChatMessage>();
+
+  for (const message of messages) {
+    if (!seen.has(message.id)) {
+      seen.set(message.id, message);
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
 export const useChatStore = create<ChatStore>((set, get) => ({
   currentSession: null,
   messages: [],
   isLoading: false,
+  isLoadingSession: false,
   error: null,
   abortController: null,
 
@@ -53,8 +68,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   loadSession: async (sessionId: string) => {
+    // Prevent loading same session concurrently
+    const state = get();
+    if (state.isLoadingSession && state.currentSession === sessionId) {
+      return;
+    }
+
     if (!getNetworkStatus()) {
-      const cached = get().messages;
+      const cached = state.messages;
       if (cached.length > 0) {
         console.log('Offline mode: Using cached messages');
         return;
@@ -62,7 +83,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       throw new Error('NETWORK_ERROR:Cannot load session while offline.');
     }
 
-    set({ isLoading: true, error: null });
+    set({ isLoadingSession: true, error: null });
 
     try {
       const { data, error } = await supabase
@@ -73,15 +94,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       if (error) throw error;
 
+      // Deduplicate messages before setting state
+      const deduplicated = deduplicateMessages(data || []);
+
       set({
         currentSession: sessionId,
-        messages: data || [],
-        isLoading: false
+        messages: deduplicated,
+        isLoadingSession: false
       });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'An error occurred',
-        isLoading: false
+        isLoadingSession: false
       });
     }
   },
@@ -136,10 +160,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       if (userMsgError) throw userMsgError;
 
-      // Update local state with user message
-      set(state => ({
-        messages: [...state.messages, userMsgData]
-      }));
+      // Update local state with user message (deduplicated)
+      set(state => {
+        const newMessages = deduplicateMessages([...state.messages, userMsgData]);
+        return { messages: newMessages };
+      });
 
       // Check network status before making API call
       if (!getNetworkStatus()) {
@@ -225,11 +250,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
         if (aiMsgError) throw aiMsgError;
 
-        // Update local state with AI response
-        set(state => ({
-          messages: [...state.messages, aiMsgData],
-          isLoading: false
-        }));
+        // Update local state with AI response (deduplicated)
+        set(state => {
+          const newMessages = deduplicateMessages([...state.messages, aiMsgData]);
+          return {
+            messages: newMessages,
+            isLoading: false
+          };
+        });
 
         // Update chat session with new message count and timestamp
         // Note: Usage tracking is now handled server-side in the edge function
@@ -275,7 +303,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   clearMessages: () => {
-    set({ messages: [], currentSession: null });
+    set({ messages: [], currentSession: null, isLoadingSession: false });
   },
 
   cancelRequest: () => {

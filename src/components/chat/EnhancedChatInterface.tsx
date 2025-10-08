@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -73,6 +73,18 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
   const { currentSession, messages, sendMessage, createNewSession, loadSession } = useChatStore();
   const { showError, showWarning } = useToast();
 
+  // Deduplicate messages as a safeguard in the component
+  const deduplicatedMessages = useMemo(() => {
+    const seen = new Map();
+    return messages.filter(msg => {
+      if (seen.has(msg.id)) {
+        return false;
+      }
+      seen.set(msg.id, true);
+      return true;
+    });
+  }, [messages]);
+
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
@@ -87,12 +99,12 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
     const { scrollTop, scrollHeight, clientHeight } = container;
     // Use a smaller, more precise threshold (20px instead of 100px)
     const isAtBottom = scrollHeight - scrollTop - clientHeight <= 20;
-    
+
     // Only show button if there are messages and user is not at bottom
-    const shouldShowButton = messages.length > 0 && !isAtBottom;
-    
+    const shouldShowButton = deduplicatedMessages.length > 0 && !isAtBottom;
+
     setShowScrollButton(shouldShowButton);
-  }, [messages.length]);
+  }, [deduplicatedMessages.length]);
 
   // Throttled scroll handler for better performance
   const handleScroll = useCallback(() => {
@@ -107,7 +119,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [deduplicatedMessages]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -286,10 +298,10 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
     if (!profile || !currentSession) return;
 
     try {
-      const messageIndex = messages.findIndex(msg => msg.id === messageId);
+      const messageIndex = deduplicatedMessages.findIndex(msg => msg.id === messageId);
       if (messageIndex === -1 || messageIndex === 0) return;
 
-      const userMessage = messages[messageIndex - 1];
+      const userMessage = deduplicatedMessages[messageIndex - 1];
       if (userMessage.role !== 'user') return;
 
       setIsLoading(true);
@@ -334,10 +346,13 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
 
       if (aiMsgError) throw aiMsgError;
 
-      const updatedMessages = [...messages];
+      // Update the specific message in state instead of reloading entire session
+      const updatedMessages = [...deduplicatedMessages];
       updatedMessages[messageIndex] = aiMsgData;
 
-      await loadSession(currentSession);
+      // Directly update state via store - access internal set function
+      useChatStore.setState({ messages: updatedMessages });
+
       setIsLoading(false);
     } catch (error) {
       console.error('Error regenerating response:', error);
@@ -411,10 +426,10 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
   };
 
   const exportChat = () => {
-    const chatContent = messages
+    const chatContent = deduplicatedMessages
       .map(msg => `${msg.role.toUpperCase()}: ${msg.message}`)
       .join('\n\n');
-    
+
     const blob = new Blob([chatContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -452,12 +467,12 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
       {/* Messages Area */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-conditional relative">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          {messages.length === 0 ? (
+          {deduplicatedMessages.length === 0 ? (
             <WelcomeScreen onSuggestionClick={setMessage} profile={profile} />
           ) : (
             <div className="space-y-6">
               <AnimatePresence>
-                {messages.map((msg) => (
+                {deduplicatedMessages.map((msg) => (
                   <EnhancedMessageBubble
                     key={msg.id}
                     message={msg}
@@ -470,7 +485,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                   />
                 ))}
               </AnimatePresence>
-              
+
               {isLoading && <LoadingIndicator />}
             </div>
           )}
@@ -584,7 +599,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                 )}
 
                 {/* Download Button */}
-                {messages.length > 0 && (
+                {deduplicatedMessages.length > 0 && (
                   <Tooltip content="Export Chat" position="top">
                     <button
                       type="button"
