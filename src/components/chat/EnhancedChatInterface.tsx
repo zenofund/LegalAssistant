@@ -453,7 +453,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-conditional relative">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {messages.length === 0 ? (
-            <WelcomeScreen onSuggestionClick={setMessage} />
+            <WelcomeScreen onSuggestionClick={setMessage} profile={profile} />
           ) : (
             <div className="space-y-6">
               <AnimatePresence>
@@ -737,7 +737,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
   );
 }
 
-function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick: (text: string) => void }) {
+function WelcomeScreen({ onSuggestionClick, profile }: { onSuggestionClick: (text: string) => void, profile: any }) {
   const suggestions = [
     {
       icon: Scale,
