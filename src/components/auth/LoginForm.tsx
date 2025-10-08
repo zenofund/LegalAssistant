@@ -41,31 +41,22 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
     setErrors({});
-    
+
     const { error } = await signIn(email, password);
-    
+
     if (error) {
-      let errorMessage = 'Failed to sign in. Please try again.';
-      
-      if (error.message.includes('Invalid login credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message.includes('Too many requests')) {
-        errorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
-      }
-      
+      const errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       setErrors({ general: errorMessage });
       showError('Sign In Failed', errorMessage);
     } else {
       showSuccess('Welcome back!', 'You have been signed in successfully.');
     }
-    
+
     setLoading(false);
   };
 

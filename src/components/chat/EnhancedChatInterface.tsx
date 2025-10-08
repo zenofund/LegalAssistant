@@ -574,7 +574,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center space-x-2 whitespace-nowrap"
+                          className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex flex-col space-y-2 whitespace-nowrap min-w-[140px] max-h-[80vh] overflow-y-auto"
                         >
                           <button
                             type="button"
@@ -582,11 +582,11 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                               setShowUploadModal(true);
                               setShowToolsMenu(false);
                             }}
-                            className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors w-full text-left"
                             title="Upload Document"
                           >
-                            <Upload className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                            <span className="text-xs text-gray-700 dark:text-gray-300">Upload</span>
+                            <Upload className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Upload</span>
                           </button>
                           {hasCitationGenerator && (
                             <button
@@ -595,11 +595,11 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                                 setShowCitationGenerator(true);
                                 setShowToolsMenu(false);
                               }}
-                              className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors w-full text-left"
                               title="Legal Citation"
                             >
-                              <Quote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                              <span className="text-xs text-gray-700 dark:text-gray-300">Citation</span>
+                              <Quote className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">Citation</span>
                             </button>
                           )}
                           {hasProFeatures && (
@@ -610,11 +610,11 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                                   setShowCaseSummarizer(true);
                                   setShowToolsMenu(false);
                                 }}
-                                className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors w-full text-left"
                                 title="Case Summarizer"
                               >
-                                <Scale className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                                <span className="text-xs text-gray-700 dark:text-gray-300">Summarizer</span>
+                                <Scale className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">Summarizer</span>
                               </button>
                               <button
                                 type="button"
@@ -622,11 +622,11 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                                   setShowCaseBriefGenerator(true);
                                   setShowToolsMenu(false);
                                 }}
-                                className="flex flex-col items-center space-y-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors w-full text-left"
                                 title="Brief Generator"
                               >
-                                <Gavel className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                <span className="text-xs text-gray-700 dark:text-gray-300">Brief</span>
+                                <Gavel className="h-5 w-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">Brief</span>
                               </button>
                             </>
                           )}
