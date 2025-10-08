@@ -151,11 +151,11 @@ export function CitationGeneratorModal({
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
-          <BookOpen className="h-6 w-6 text-blue-600" />
+        <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           <div>
-            <h3 className="font-semibold text-blue-900">Generate Nigerian Legal Citations</h3>
-            <p className="text-sm text-blue-700">Create properly formatted NWLR and FWLR citations</p>
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100">Generate Nigerian Legal Citations</h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300">Create properly formatted NWLR and FWLR citations</p>
           </div>
         </div>
 
@@ -163,7 +163,7 @@ export function CitationGeneratorModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Required Fields */}
           <div className="md:col-span-2">
-            <h4 className="font-medium text-gray-900 mb-3">Required Information</h4>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Required Information</h4>
           </div>
           
           <Input
@@ -199,13 +199,13 @@ export function CitationGeneratorModal({
           />
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Reporter *
             </label>
             <select
               value={form.reporter}
               onChange={(e) => handleInputChange('reporter', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="NWLR">NWLR (Nigerian Weekly Law Reports)</option>
               <option value="FWLR">FWLR (Federal Weekly Law Reports)</option>
@@ -223,7 +223,7 @@ export function CitationGeneratorModal({
           
           {/* Optional Fields */}
           <div className="md:col-span-2 mt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Optional Information</h4>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Optional Information</h4>
           </div>
           
           <Input
@@ -236,13 +236,13 @@ export function CitationGeneratorModal({
           />
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Citation Style
             </label>
             <select
               value={form.citationStyle}
               onChange={(e) => handleInputChange('citationStyle', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="full">Full Citation (with additional details)</option>
               <option value="short">Short Citation (basic format)</option>
@@ -274,9 +274,9 @@ export function CitationGeneratorModal({
 
         {/* Generated Citation */}
         {generatedCitation && (
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">Generated Citation:</h4>
-            <div className="p-3 bg-white border rounded-lg font-mono text-sm">
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Generated Citation:</h4>
+            <div className="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm text-gray-900 dark:text-gray-100">
               {generatedCitation}
             </div>
             <div className="flex items-center space-x-2 mt-3">
