@@ -477,59 +477,6 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Improved Scroll to Bottom Button */}
-        <AnimatePresence>
-          {showScrollButton && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ 
-                opacity: 1, 
-                scale: 1, 
-                y: 0,
-                transition: {
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 25,
-                  duration: 0.3
-                }
-              }}
-              exit={{ 
-                opacity: 0, 
-                scale: 0.8, 
-                y: 20,
-                transition: {
-                  duration: 0.2,
-                  ease: "easeInOut"
-                }
-              }}
-              whileHover={{ 
-                scale: 1.1,
-                transition: { duration: 0.15 }
-              }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => scrollToBottom('smooth')}
-              className="fixed bottom-32 left-1/2 -translate-x-1/2 z-20 w-12 h-12 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
-              title="Scroll to bottom"
-              aria-label="Scroll to bottom of chat"
-            >
-              <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-              
-              {/* Subtle pulse animation */}
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 border-blue-500/30"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0, 0.5]
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-            </motion.button>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Input Area */}
