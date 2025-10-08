@@ -492,7 +492,7 @@ export function EnhancedChatInterface({ onShowSubscription }: EnhancedChatInterf
                 onKeyDown={handleKeyDown}
                 onFocus={handleTextareaFocus}
                 onBlur={handleTextareaBlur}
-                placeholder="Ask about Nigerian law, upload documents, or use AI tools..."
+                placeholder="What are analysing?"
                 className="flex-1 bg-transparent border-none outline-none resize-none px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 min-h-[48px] max-h-[120px]"
                 rows={1}
                 disabled={isLoading}
