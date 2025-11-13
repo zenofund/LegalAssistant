@@ -18,6 +18,10 @@ import { supabase, hasPermission } from '../lib/supabase';
 
 export function EnhancedDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [showUpload, setShowUpload] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
@@ -30,6 +34,10 @@ export function EnhancedDashboardPage() {
   const [paymentMessage, setPaymentMessage] = useState('');
   const [viewMode, setViewMode] = useState<'chat' | 'admin'>('chat');
   const { profile, refreshProfile } = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   useEffect(() => {
     const handlePaymentRedirect = async () => {
@@ -196,6 +204,8 @@ export function EnhancedDashboardPage() {
         <EnhancedSidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
           onShowUpload={() => setShowUpload(true)}
           onShowSettings={() => setShowSettings(true)}
           onShowSubscription={() => setShowSubscription(true)}
@@ -207,7 +217,7 @@ export function EnhancedDashboardPage() {
         />
       </ErrorBoundary>
 
-      <div className="flex-1 lg:ml-80 flex flex-col">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-80'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden bg-white dark:bg-dark-secondary border-b border-gray-200 dark:border-dark-primary px-4 py-3 flex items-center justify-between transition-colors duration-200">
           <Button
