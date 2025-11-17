@@ -368,9 +368,9 @@ export function EnhancedSidebar({
       )}
 
       {/* Chat History */}
-      <div className={`flex-1 overflow-y-auto scrollbar-thin transition-all duration-300 ${isCollapsed ? 'px-2' : 'px-4'}`}>
-        <div className="space-y-1">
-          {!isCollapsed && (
+      {!isCollapsed && (
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-4">
+          <div className="space-y-1">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center space-x-2">
                 <History className="h-3.5 w-3.5" />
@@ -397,98 +397,81 @@ export function EnhancedSidebar({
                 </Button>
               </div>
             </div>
-          )}
 
-          {isCollapsed ? (
-            <>
-              {filteredSessions.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-6 w-6 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">No chats</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredSessions.map((session) => (
-                    <Tooltip key={session.id} content={session.title || 'New Conversation'}>
-                      <button
-                        onClick={() => handleSessionClick(session.id)}
-                        className={`w-full flex items-center justify-center p-2 rounded-lg transition-all ${
-                          selectedSession === session.id
-                            ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
-                        }`}
-                      >
-                        <div className={`w-2 h-2 rounded-full ${
-                          selectedSession === session.id ? 'bg-blue-500' : 'bg-gray-300'
-                        }`} />
-                      </button>
-                    </Tooltip>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {filteredSessions.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No conversations yet</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Start a new chat to begin</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredSessions.map((session) => (
-                    <ChatSessionItem
-                      key={session.id}
-                      session={session}
-                      isSelected={selectedSession === session.id}
-                      onClick={() => handleSessionClick(session.id)}
-                      onArchive={() => archiveSession(session.id)}
-                      onDelete={() => deleteSession(session.id)}
-                      onRename={(e) => handleStartRename(session.id, session.title, e)}
-                      showDeleteSuccess={deletedSessionId === session.id}
-                      showArchiveSuccess={archivedSessionId === session.id}
-                      showRenameSuccess={renamedSessionId === session.id}
-                      isEditing={editingSessionId === session.id}
-                      editingTitle={editingTitle}
-                      onEditingTitleChange={setEditingTitle}
-                      onSaveRename={() => handleSaveRename(session.id)}
-                      onRenameKeyDown={(e) => handleRenameKeyDown(e, session.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      {!isCollapsed && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-              Tools
-            </h3>
-            <Button
-              variant="ghost"
-              onClick={onShowHistory}
-              className="w-full justify-start text-sm py-2"
-            >
-              <History className="h-4 w-4 mr-3" />
-              Chat History
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={onShowArchived}
-              className="w-full justify-start text-sm py-2"
-            >
-              <Archive className="h-4 w-4 mr-3" />
-              Archived Chats
-            </Button>
+            {filteredSessions.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">No conversations yet</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Start a new chat to begin</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {filteredSessions.map((session) => (
+                  <ChatSessionItem
+                    key={session.id}
+                    session={session}
+                    isSelected={selectedSession === session.id}
+                    onClick={() => handleSessionClick(session.id)}
+                    onArchive={() => archiveSession(session.id)}
+                    onDelete={() => deleteSession(session.id)}
+                    onRename={(e) => handleStartRename(session.id, session.title, e)}
+                    showDeleteSuccess={deletedSessionId === session.id}
+                    showArchiveSuccess={archivedSessionId === session.id}
+                    showRenameSuccess={renamedSessionId === session.id}
+                    isEditing={editingSessionId === session.id}
+                    editingTitle={editingTitle}
+                    onEditingTitleChange={setEditingTitle}
+                    onSaveRename={() => handleSaveRename(session.id)}
+                    onRenameKeyDown={(e) => handleRenameKeyDown(e, session.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      {/* Flex spacer - only visible when collapsed to push tools to bottom */}
+      {isCollapsed && <div className="flex-1" />}
+
+      {/* Quick Actions / Tools */}
+      <div className={`border-t border-gray-200 dark:border-gray-700 transition-all duration-300 ${isCollapsed ? 'p-2' : 'p-4'}`}>
+        {!isCollapsed && (
+          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+            Tools
+          </h3>
+        )}
+        <div className={`space-y-1 ${isCollapsed ? 'space-y-2' : ''}`}>
+          <Tooltip content="Chat History">
+            <button
+              onClick={onShowHistory}
+              className={`flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all ${
+                isCollapsed
+                  ? 'w-full p-2 justify-center'
+                  : 'w-full justify-start text-sm py-2 px-3'
+              }`}
+              aria-label="Chat History"
+            >
+              <History className={isCollapsed ? 'h-5 w-5' : 'h-4 w-4 mr-3'} />
+              {!isCollapsed && 'Chat History'}
+            </button>
+          </Tooltip>
+          <Tooltip content="Archived Chats">
+            <button
+              onClick={onShowArchived}
+              className={`flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all ${
+                isCollapsed
+                  ? 'w-full p-2 justify-center'
+                  : 'w-full justify-start text-sm py-2 px-3'
+              }`}
+              aria-label="Archived Chats"
+            >
+              <Archive className={isCollapsed ? 'h-5 w-5' : 'h-4 w-4 mr-3'} />
+              {!isCollapsed && 'Archived Chats'}
+            </button>
+          </Tooltip>
+        </div>
+      </div>
 
       {/* User Menu */}
       <div className={`border-t border-gray-200 dark:border-gray-700 transition-all duration-300 ${isCollapsed ? 'p-2' : 'p-4'}`}>
